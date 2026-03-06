@@ -1,0 +1,17 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="unilinkBg" x1="8" y1="8" x2="56" y2="56" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0EA5E9" />
+      <stop offset="1" stop-color="#2563EB" />
+    </linearGradient>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="30" fill="url(#unilinkBg)" />
+  <rect x="2.5" y="2.5" width="59" height="59" rx="29.5" stroke="#FFFFFF" stroke-opacity="0.2" />
+  <path
+    d="M24 23.5C24 21.0147 26.0147 19 28.5 19H35.5C37.9853 19 40 21.0147 40 23.5V25.5C40 27.9853 37.9853 30 35.5 30H31.5C29.0147 30 27 32.0147 27 34.5V40.5"
+    stroke="white"
+    stroke-width="4"
+    stroke-linecap="round"
+  />
+  <rect x="24.5" y="38.5" width="15" height="6.5" rx="3.25" fill="white" />
+</svg>
