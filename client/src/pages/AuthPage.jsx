@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { MotionPage } from "../lib/motion";
 
 const initialForm = {
   fullName: "",
@@ -47,7 +48,7 @@ const AuthPage = () => {
   };
 
   return (
-    <main className="min-h-screen bg-slate-100 px-4 py-12">
+    <MotionPage className="min-h-screen bg-slate-100 px-4 py-12">
       <section className="mx-auto w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <p className="inline-flex rounded-full bg-blue-100 px-3 py-1 text-xs font-bold uppercase tracking-wide text-blue-700">
           UniLink Access
@@ -143,7 +144,7 @@ const AuthPage = () => {
           </button>
         </form>
       </section>
-    </main>
+    </MotionPage>
   );
 };
 

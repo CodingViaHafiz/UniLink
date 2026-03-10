@@ -2,40 +2,79 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import uniLinkLogo from "../../assets/unilink-logo-campus.svg";
 
-const links = [
-  { label: "Home", href: "#home" },
-  { label: "Blogs", href: "#blogs" },
-  { label: "About", href: "#about" },
-  { label: "Contact", href: "#contact" },
+const primaryLinks = [
+  { label: "Home", to: "/home" },
+  { label: "Blogs", to: "/blogs" },
+];
+
+const secondaryLinks = [
+  { label: "Hostels", to: "/hostels" },
+  { label: "About", to: "/about" },
+];
+
+const resourceLinks = [
+  { label: "Notes", to: "/resources/notes" },
+  { label: "Past Papers", to: "/resources/past-papers" },
+  { label: "Timetable", to: "/resources/timetable" },
 ];
 
 const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 px-3 py-3 sm:px-6">
       <nav className="mx-auto w-full max-w-7xl">
         <div className="hidden items-center justify-between rounded-full border border-sky-100 bg-white/90 px-3 py-2 text-slate-800 shadow-[0_14px_34px_-18px_rgba(2,132,199,0.45)] backdrop-blur lg:flex">
-          <a
-            className="inline-flex items-center gap-2 rounded-full pr-3"
-            href="#home"
-            aria-label="Go to home section"
-          >
+          <Link className="inline-flex items-center gap-2 rounded-full pr-3" to="/home" aria-label="Go to home page">
             <img src={uniLinkLogo} alt="UniLink logo" className="h-10 w-10 rounded-full" />
             <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-sm font-black tracking-tight text-transparent">
               UniLink
             </span>
-          </a>
+          </Link>
 
           <div className="flex items-center gap-1">
-            {links.map((item) => (
-              <a
+            {primaryLinks.map((item) => (
+              <Link
                 key={item.label}
                 className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-700"
-                href={item.href}
+                to={item.to}
               >
                 {item.label}
-              </a>
+              </Link>
+            ))}
+            <div className="relative">
+              <button
+                type="button"
+                className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-700"
+                onClick={() => setResourcesOpen((previous) => !previous)}
+              >
+                Resources
+                <span className="text-[10px] font-black">▼</span>
+              </button>
+              {resourcesOpen && (
+                <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
+                  {resourceLinks.map((item) => (
+                    <Link
+                      key={item.to}
+                      className="block rounded-xl px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                      to={item.to}
+                      onClick={() => setResourcesOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+            {secondaryLinks.map((item) => (
+              <Link
+                key={item.label}
+                className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-700"
+                to={item.to}
+              >
+                {item.label}
+              </Link>
             ))}
             {user?.role === "faculty" && (
               <Link
@@ -67,14 +106,14 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
           </div>
         </div>
 
-        <div className="rounded-3xl border border-sky-100 bg-white/95 p-3 text-slate-800 shadow-[0_14px_34px_-18px_rgba(2,132,199,0.4)] backdrop-blur lg:hidden">
+          <div className="rounded-3xl border border-sky-100 bg-white/95 p-3 text-slate-800 shadow-[0_14px_34px_-18px_rgba(2,132,199,0.4)] backdrop-blur lg:hidden">
           <div className="flex items-center justify-between gap-2">
-            <a className="inline-flex min-w-0 items-center gap-2 rounded-full pr-2" href="#home">
+            <Link className="inline-flex min-w-0 items-center gap-2 rounded-full pr-2" to="/home">
               <img src={uniLinkLogo} alt="UniLink logo" className="h-10 w-10 rounded-full" />
               <span className="bg-gradient-to-r from-sky-500 to-blue-600 bg-clip-text text-sm font-black tracking-tight text-transparent">
                 UniLink
               </span>
-            </a>
+            </Link>
             <button
               type="button"
               className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700"
@@ -86,15 +125,40 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
 
           {menuOpen && (
             <div className="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-2">
-              {links.map((item) => (
-                <a
+              {primaryLinks.map((item) => (
+                <Link
                   key={item.label}
                   className="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
-                  href={item.href}
+                  to={item.to}
                   onClick={() => setMenuOpen(false)}
                 >
                   {item.label}
-                </a>
+                </Link>
+              ))}
+              <div className="rounded-xl border border-slate-200 bg-white p-2">
+                <p className="px-2 text-xs font-bold uppercase tracking-wide text-slate-500">Resources</p>
+                <div className="mt-2 space-y-1">
+                  {resourceLinks.map((item) => (
+                    <Link
+                      key={item.to}
+                      className="block rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      to={item.to}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+              {secondaryLinks.map((item) => (
+                <Link
+                  key={item.label}
+                  className="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
+                  to={item.to}
+                  onClick={() => setMenuOpen(false)}
+                >
+                  {item.label}
+                </Link>
               ))}
               {user?.role === "faculty" && (
                 <Link

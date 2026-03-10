@@ -29,13 +29,14 @@ const findBucketByDate = (buckets, inputDate) => {
 
 export const getAdminStats = async (_req, res) => {
   try {
-    const [totalUsers, totalStudents, totalFaculty, totalAdmins, totalBlogs] = await Promise.all([
-      User.countDocuments(),
-      User.countDocuments({ role: "student" }),
-      User.countDocuments({ role: "faculty" }),
-      User.countDocuments({ role: "admin" }),
-      Blog.countDocuments(),
-    ]);
+    const [totalUsers, totalStudents, totalFaculty, totalAdmins, totalBlogs] =
+      await Promise.all([
+        User.countDocuments(),
+        User.countDocuments({ role: "student" }),
+        User.countDocuments({ role: "faculty" }),
+        User.countDocuments({ role: "admin" }),
+        Blog.countDocuments(),
+      ]);
 
     return res.status(200).json({
       stats: {
@@ -47,7 +48,9 @@ export const getAdminStats = async (_req, res) => {
       },
     });
   } catch (error) {
-    return res.status(500).json({ message: "Failed to load admin stats.", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to load admin stats.", error: error.message });
   }
 };
 
@@ -83,15 +86,23 @@ export const getAdminActivity = async (_req, res) => {
 
     return res.status(200).json({ activity });
   } catch (error) {
-    return res.status(500).json({ message: "Failed to load activity data.", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to load activity data.", error: error.message });
   }
 };
 
 export const getRecentAdminActivity = async (_req, res) => {
   try {
     const [recentUsers, recentBlogs] = await Promise.all([
-      User.find().sort({ createdAt: -1 }).limit(4).select("fullName role createdAt"),
-      Blog.find().sort({ createdAt: -1 }).limit(4).select("title role author createdAt"),
+      User.find()
+        .sort({ createdAt: -1 })
+        .limit(4)
+        .select("fullName role createdAt"),
+      Blog.find()
+        .sort({ createdAt: -1 })
+        .limit(4)
+        .select("title role author createdAt"),
     ]);
 
     const activity = [
@@ -113,7 +124,10 @@ export const getRecentAdminActivity = async (_req, res) => {
 
     return res.status(200).json({ activity: activity.slice(0, 6) });
   } catch (error) {
-    return res.status(500).json({ message: "Failed to load recent admin activity.", error: error.message });
+    return res.status(500).json({
+      message: "Failed to load recent admin activity.",
+      error: error.message,
+    });
   }
 };
 
@@ -139,6 +153,7 @@ export const prepareUploadStructure = async (req, res) => {
       mimeType: mimeType || null,
       sizeKb: sizeKb || null,
     },
-    message: "Upload endpoint scaffold is ready. File storage integration can be connected next.",
+    message:
+      "Upload endpoint scaffold is ready. File storage integration can be connected next.",
   });
 };

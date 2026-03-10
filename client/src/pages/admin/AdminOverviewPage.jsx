@@ -5,6 +5,7 @@ import RecentActivityPanel from "../../components/admin/RecentActivityPanel";
 import StatsCards from "../../components/admin/StatsCards";
 import { quickActionLinks } from "../../constants/adminConfig";
 import { apiFetch } from "../../lib/api";
+import { MotionPage } from "../../lib/motion";
 
 const defaultStats = {
   totalUsers: 0,
@@ -55,7 +56,7 @@ const AdminOverviewPage = () => {
   }
 
   return (
-    <main className="space-y-5">
+    <MotionPage className="space-y-5">
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
         <h1 className="text-2xl font-black tracking-tight text-slate-900">Admin Dashboard</h1>
         <p className="mt-2 text-sm text-slate-600">
@@ -72,8 +73,9 @@ const AdminOverviewPage = () => {
           <RecentActivityPanel activity={recentActivity} />
         </div>
       </section>
-    </main>
+    </MotionPage>
   );
 };
 
 export default AdminOverviewPage;
+

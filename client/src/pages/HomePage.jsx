@@ -7,6 +7,7 @@ import HomeNavbar from "../components/home/HomeNavbar";
 import StatsSection from "../components/home/StatsSection";
 import { useAuth } from "../hooks/useAuth";
 import { apiFetch } from "../lib/api";
+import { MotionPage } from "../lib/motion";
 
 const HomePage = () => {
   const navigate = useNavigate();
@@ -69,13 +70,13 @@ const HomePage = () => {
   };
 
   return (
-    <main className="min-h-screen bg-slate-50">
+    <MotionPage className="min-h-screen bg-slate-50">
       <HomeNavbar user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut} />
       <HeroSection />
       <BlogSection blogs={blogs} isLoading={blogsLoading} error={blogsError} />
       <StatsSection stats={stats} isLoading={statsLoading} />
       <HomeFooter />
-    </main>
+    </MotionPage>
   );
 };
 

@@ -8,6 +8,10 @@
     min-height: 100%;
   }
 
+  html {
+    scroll-behavior: smooth;
+  }
+
   body {
     margin: 0;
     font-family: "Manrope", "Segoe UI", "Helvetica Neue", sans-serif;

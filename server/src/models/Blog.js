@@ -20,6 +20,10 @@ const blogSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
+    authorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
     role: {
       type: String,
       enum: ["faculty", "admin"],
