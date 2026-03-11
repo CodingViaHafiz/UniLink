@@ -1,15 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import uniLinkLogo from "../../assets/unilink-logo-campus.svg";
 
 const primaryLinks = [
-  { label: "Home", to: "/home" },
-  { label: "Blogs", to: "/blogs" },
+  { label: "Home", to: "/home", hash: "home" },
+  { label: "Blogs", to: "/blogs", hash: "blogs" },
 ];
 
 const secondaryLinks = [
   { label: "Hostels", to: "/hostels" },
-  { label: "About", to: "/about" },
+  { label: "About", to: "/about", hash: "about" },
 ];
 
 const resourceLinks = [
@@ -21,6 +21,19 @@ const resourceLinks = [
 const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [resourcesOpen, setResourcesOpen] = useState(false);
+  const location = useLocation();
+
+  const getLinkTo = (item) => {
+    if (!item.hash) {
+      return item.to;
+    }
+
+    if (location.pathname === "/home") {
+      return `/home#${item.hash}`;
+    }
+
+    return item.to;
+  };
 
   return (
     <header className="sticky top-0 z-50 px-3 py-3 sm:px-6">
@@ -38,7 +51,8 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
               <Link
                 key={item.label}
                 className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-700"
-                to={item.to}
+                to={getLinkTo(item)}
+                onClick={() => setResourcesOpen(false)}
               >
                 {item.label}
               </Link>
@@ -50,7 +64,7 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
                 onClick={() => setResourcesOpen((previous) => !previous)}
               >
                 Resources
-                <span className="text-[10px] font-black">▼</span>
+                <span className="text-[10px] font-black">v</span>
               </button>
               {resourcesOpen && (
                 <div className="absolute left-0 top-full mt-2 w-44 rounded-2xl border border-slate-200 bg-white p-2 shadow-lg">
@@ -71,7 +85,8 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
               <Link
                 key={item.label}
                 className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-700"
-                to={item.to}
+                to={getLinkTo(item)}
+                onClick={() => setResourcesOpen(false)}
               >
                 {item.label}
               </Link>
@@ -129,7 +144,7 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
                 <Link
                   key={item.label}
                   className="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
-                  to={item.to}
+                  to={getLinkTo(item)}
                   onClick={() => setMenuOpen(false)}
                 >
                   {item.label}
@@ -154,7 +169,7 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
                 <Link
                   key={item.label}
                   className="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
-                  to={item.to}
+                  to={getLinkTo(item)}
                   onClick={() => setMenuOpen(false)}
                 >
                   {item.label}
@@ -195,3 +210,4 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
 };
 
 export default HomeNavbar;
+

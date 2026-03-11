@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { MotionSection } from "../../lib/motion";
 
 const CounterCard = ({ label, value }) => {
   const [display, setDisplay] = useState(0);
@@ -35,7 +36,7 @@ const CounterCard = ({ label, value }) => {
 
 const StatsSection = ({ stats, isLoading }) => {
   return (
-    <section id="about" className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+    <MotionSection id="about" className="mx-auto w-full max-w-7xl scroll-mt-24 px-4 py-14 sm:px-6 lg:px-8">
       <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-cyan-50 to-blue-50 p-6 sm:p-8">
         <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Platform Statistics</p>
         <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Real-time growth snapshot</h2>
@@ -52,7 +53,7 @@ const StatsSection = ({ stats, isLoading }) => {
           </div>
         )}
       </div>
-    </section>
+    </MotionSection>
   );
 };
 

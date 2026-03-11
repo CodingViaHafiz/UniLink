@@ -1,34 +1,79 @@
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 
-const pageVariants = {
-  initial: { opacity: 0, y: 14 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -10 },
+/* ---------------------------------- */
+/* Page Wrapper Animation */
+/* ---------------------------------- */
+
+export const MotionPage = ({ children, className = "", ...props }) => {
+  const shouldReduceMotion = useReducedMotion();
+
+  const pageVariants = {
+    initial: {
+      opacity: 0,
+      y: shouldReduceMotion ? 0 : 40,
+      scale: shouldReduceMotion ? 1 : 0.98,
+    },
+    animate: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      transition: {
+        duration: 0.5,
+        ease: [0.25, 0.1, 0.25, 1],
+        when: "beforeChildren",
+        staggerChildren: 0.08,
+      },
+    },
+    exit: {
+      opacity: 0,
+      y: shouldReduceMotion ? 0 : -20,
+      scale: shouldReduceMotion ? 1 : 0.98,
+      transition: {
+        duration: 0.3,
+        ease: "easeInOut",
+      },
+    },
+  };
+
+  return (
+    <motion.main
+      {...props}
+      className={`will-change-transform ${className}`}
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
+      {children}
+    </motion.main>
+  );
 };
 
-const pageTransition = { duration: 0.35, ease: "easeOut" };
+/* ---------------------------------- */
+/* Scroll Reveal Section */
+/* ---------------------------------- */
 
-export const MotionPage = ({ children, className }) => (
-  <motion.main
-    className={className}
-    variants={pageVariants}
-    initial="initial"
-    animate="animate"
-    exit="exit"
-    transition={pageTransition}
-  >
-    {children}
-  </motion.main>
-);
-
-export const MotionSection = ({ children, className, delay = 0 }) => (
-  <motion.section
-    className={className}
-    initial={{ opacity: 0, y: 18 }}
-    whileInView={{ opacity: 1, y: 0 }}
-    viewport={{ once: true, amount: 0.2 }}
-    transition={{ duration: 0.45, delay, ease: "easeOut" }}
-  >
-    {children}
-  </motion.section>
-);
+export const MotionSection = ({
+  children,
+  className = "",
+  delay = 0,
+  ...props
+}) => {
+  return (
+    <motion.section
+      {...props}
+      className={`will-change-transform ${className}`}
+      initial={{ opacity: 0, y: 40 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{
+        type: "spring",
+        stiffness: 70,
+        damping: 18,
+        delay,
+      }}
+    >
+      {children}
+    </motion.section>
+  );
+};

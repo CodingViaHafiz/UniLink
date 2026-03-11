@@ -1,6 +1,8 @@
+import { MotionSection } from "../../lib/motion";
+
 const BlogSection = ({ blogs, isLoading, error }) => {
   return (
-    <section id="blogs" className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+    <MotionSection id="blogs" className="mx-auto w-full max-w-7xl scroll-mt-24 px-4 py-14 sm:px-6 lg:px-8">
       <div className="mb-7 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-lg font-bold  uppercase tracking-[0.16em] text-blue-700 ">Knowledge Hub</p>
@@ -45,7 +47,7 @@ const BlogSection = ({ blogs, isLoading, error }) => {
           ))}
         </div>
       )}
-    </section>
+    </MotionSection>
   );
 };
 

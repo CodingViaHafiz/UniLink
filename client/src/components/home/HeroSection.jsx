@@ -1,8 +1,10 @@
+import { MotionSection } from "../../lib/motion";
+
 const HeroSection = () => {
   return (
-    <section
+    <MotionSection
       id="home"
-      className="hero-glow relative overflow-hidden border-b border-slate-200 bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-800 text-white"
+      className="hero-glow relative scroll-mt-24 overflow-hidden border-b border-slate-200 bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-800 text-white"
     >
       <div className="mx-auto grid w-full max-w-7xl gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2 lg:items-center lg:px-8 lg:py-24">
         <div className="space-y-5">
@@ -32,7 +34,7 @@ const HeroSection = () => {
           </ul>
         </div>
       </div>
-    </section>
+    </MotionSection>
   );
 };
 
