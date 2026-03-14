@@ -4,7 +4,7 @@ import { authorizeRoles, protect } from "../middleware/authMiddleware.js";
 import { createUploader } from "../middleware/upload.js";
 
 const router = express.Router();
-const upload = createUploader("hostels");
+const upload = createUploader("hostels", "images");
 
 router.get("/", getHostels);
 router.post("/", protect, authorizeRoles("admin"), upload.single("image"), createHostel);

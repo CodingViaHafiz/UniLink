@@ -2,6 +2,7 @@ import cookieParser from "cookie-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import multer from "multer";
 import path from "path";
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
@@ -34,6 +35,14 @@ app.use("/api/resources", resourceRoutes);
 app.use("/api/hostels", hostelRoutes);
 
 app.use((err, _req, res, _next) => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === "LIMIT_FILE_SIZE") {
+      return res.status(400).json({ message: "File is too large. Maximum allowed size exceeded." });
+    }
+    // LIMIT_UNEXPECTED_FILE is reused for invalid mime type (see upload.js)
+    return res.status(400).json({ message: err.field || "Invalid file upload." });
+  }
+
   console.error(err);
   res.status(500).json({ message: "Internal server error." });
 });

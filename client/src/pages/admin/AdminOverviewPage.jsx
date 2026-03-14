@@ -66,9 +66,11 @@ const AdminOverviewPage = () => {
 
       <StatsCards stats={stats} />
 
-      <section className="grid gap-5 xl:grid-cols-[2fr_1fr]">
-        <ActivityChart activity={activity} />
-        <div className="space-y-5">
+      <section className="grid gap-5 2xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] 2xl:items-start">
+        <div className="min-w-0">
+          <ActivityChart activity={activity} />
+        </div>
+        <div className="min-w-0 space-y-5">
           <QuickActions items={quickActionLinks} />
           <RecentActivityPanel activity={recentActivity} />
         </div>

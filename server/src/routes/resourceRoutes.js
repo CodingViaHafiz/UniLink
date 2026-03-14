@@ -11,7 +11,7 @@ import { authorizeRoles, protect } from "../middleware/authMiddleware.js";
 import { createUploader } from "../middleware/upload.js";
 
 const router = express.Router();
-const upload = createUploader("resources");
+const upload = createUploader("resources", "documents");
 
 router.get("/", getResources);
 router.get("/mine", protect, authorizeRoles("faculty", "admin"), getMyResources);

@@ -16,6 +16,12 @@ export const protect = async (req, res, next) => {
       return res.status(401).json({ message: "Unauthorized: user not found." });
     }
 
+    if (!user.isActive) {
+      return res.status(403).json({
+        message: "Your account has been deactivated. Please contact the administrator.",
+      });
+    }
+
     req.user = user;
     return next();
   } catch {

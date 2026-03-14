@@ -14,6 +14,7 @@ import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
 import AdminHostelsPage from "./pages/admin/AdminHostelsPage";
 import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
 import AdminOverviewPage from "./pages/admin/AdminOverviewPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleRoute from "./routes/RoleRoute";
 import { useEffect } from "react";
@@ -66,6 +67,7 @@ function App() {
           <Route element={<RoleRoute allowedRoles={["admin"]} />}>
             <Route path="/admin-dashboard" element={<AdminLayoutPage />}>
               <Route index element={<AdminOverviewPage />} />
+              <Route path="users" element={<AdminUsersPage />} />
               <Route path="resources" element={<AdminResourcesPage />} />
               <Route path="blogs" element={<AdminBlogsPage />} />
               <Route path="hostels" element={<AdminHostelsPage />} />

@@ -4,6 +4,10 @@ export const adminSidebarSections = [
     links: [{ label: "Dashboard", to: "/admin-dashboard" }],
   },
   {
+    title: "Users",
+    links: [{ label: "User Management", to: "/admin-dashboard/users" }],
+  },
+  {
     title: "Content",
     links: [
       { label: "Resources", to: "/admin-dashboard/resources" },
@@ -14,6 +18,7 @@ export const adminSidebarSections = [
 ];
 
 export const quickActionLinks = [
+  { label: "Manage Users", to: "/admin-dashboard/users" },
   { label: "Upload Resource", to: "/admin-dashboard/resources" },
   { label: "Publish Blog", to: "/admin-dashboard/blogs" },
   { label: "Add Hostel", to: "/admin-dashboard/hostels" },

@@ -19,12 +19,22 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      minlength: 6,
+      minlength: 8,
     },
     role: {
       type: String,
       enum: ["student", "faculty", "admin"],
       default: "student",
+    },
+    department: {
+      type: String,
+      trim: true,
+      maxlength: 100,
+      default: "",
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
     },
   },
   { timestamps: true }
