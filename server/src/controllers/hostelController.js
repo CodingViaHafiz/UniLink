@@ -13,6 +13,7 @@ const toHostelResponse = (hostel, req) => ({
   price: hostel.price,
   contact: hostel.contact,
   description: hostel.description,
+  mapUrl: hostel.mapUrl || "",
   imageUrl: buildImageUrl(req, hostel.imageUrl),
   uploadedBy: hostel.uploadedBy,
   createdAt: hostel.createdAt,
@@ -20,7 +21,7 @@ const toHostelResponse = (hostel, req) => ({
 
 export const createHostel = async (req, res) => {
   try {
-    const { name, location, price, contact, description } = req.body;
+    const { name, location, price, contact, description, mapUrl } = req.body;
 
     if (!name || !location || !price || !contact) {
       return res.status(400).json({ message: "Name, location, price, and contact are required." });
@@ -32,6 +33,7 @@ export const createHostel = async (req, res) => {
       price,
       contact,
       description: description || "",
+      mapUrl: mapUrl || "",
       imageUrl: req.file ? `/uploads/hostels/${req.file.filename}` : "",
       uploadedBy: req.user._id,
     });
@@ -57,7 +59,7 @@ export const getHostels = async (req, res) => {
 export const updateHostel = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, location, price, contact, description } = req.body;
+    const { name, location, price, contact, description, mapUrl } = req.body;
 
     const hostel = await Hostel.findById(id);
     if (!hostel) {
@@ -69,6 +71,7 @@ export const updateHostel = async (req, res) => {
     if (price) hostel.price = price;
     if (contact) hostel.contact = contact;
     if (description !== undefined) hostel.description = description;
+    if (mapUrl !== undefined) hostel.mapUrl = mapUrl;
     if (req.file) hostel.imageUrl = `/uploads/hostels/${req.file.filename}`;
 
     await hostel.save();

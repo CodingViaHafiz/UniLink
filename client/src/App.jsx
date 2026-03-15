@@ -15,6 +15,7 @@ import AdminHostelsPage from "./pages/admin/AdminHostelsPage";
 import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
 import AdminOverviewPage from "./pages/admin/AdminOverviewPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import SetPasswordPage from "./pages/SetPasswordPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleRoute from "./routes/RoleRoute";
 import { useEffect } from "react";
@@ -52,11 +53,12 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<AuthPage />} />
+        <Route path="/set-password/:token" element={<SetPasswordPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<HomePage />} />
           <Route path="/blogs" element={<BlogsPage />} />
-          <Route path="/resources/:type" element={<ResourcesTypePage />} />
+          <Route path="/resources" element={<ResourcesTypePage />} />
           <Route path="/hostels" element={<HostelsPage />} />
           <Route path="/about" element={<AboutPage />} />
 

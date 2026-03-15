@@ -5,7 +5,7 @@ import path from "path";
 // ─── Allowed MIME type sets ───────────────────────────────────────────────────
 
 export const MIME_TYPES = {
-  // Academic resources: PDF, Word, PowerPoint, Excel, plain text
+  // Pure document types
   documents: new Set([
     "application/pdf",
     "application/msword",
@@ -18,7 +18,18 @@ export const MIME_TYPES = {
   ]),
 
   // Hostel images: common web-safe formats only
-  images: new Set([
+  images: new Set(["image/jpeg", "image/png", "image/webp"]),
+
+  // Academic resources: documents + images (timetables are often uploaded as images)
+  resources: new Set([
+    "application/pdf",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-powerpoint",
+    "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "text/plain",
     "image/jpeg",
     "image/png",
     "image/webp",
@@ -28,8 +39,9 @@ export const MIME_TYPES = {
 // ─── Size limits ──────────────────────────────────────────────────────────────
 
 const SIZE_LIMITS = {
-  documents: 15 * 1024 * 1024,  // 15 MB
-  images:     5 * 1024 * 1024,  //  5 MB
+  documents: 15 * 1024 * 1024, // 15 MB
+  images: 5 * 1024 * 1024, //  5 MB
+  resources: 15 * 1024 * 1024, // 15 MB
 };
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -66,7 +78,9 @@ export const createUploader = (folder, mimeGroup) => {
   const maxSize = SIZE_LIMITS[mimeGroup];
 
   if (!allowedTypes) {
-    throw new Error(`Unknown mimeGroup "${mimeGroup}". Use "documents" or "images".`);
+    throw new Error(
+      `Unknown mimeGroup "${mimeGroup}". Use "documents" or "images".`,
+    );
   }
 
   const fileFilter = (_req, file, cb) => {
@@ -76,9 +90,9 @@ export const createUploader = (folder, mimeGroup) => {
       cb(
         new multer.MulterError(
           "LIMIT_UNEXPECTED_FILE",
-          `File type "${file.mimetype}" is not allowed.`
+          `File type "${file.mimetype}" is not allowed.`,
         ),
-        false
+        false,
       );
     }
   };

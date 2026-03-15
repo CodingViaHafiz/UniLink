@@ -1,57 +1,119 @@
 import { useEffect, useState } from "react";
 import { MotionSection } from "../../lib/motion";
 
-const CounterCard = ({ label, value }) => {
+const CountUp = ({ value }) => {
   const [display, setDisplay] = useState(0);
 
   useEffect(() => {
-    let rafId = 0;
-    let startTime = 0;
-    const duration = 900;
+    if (!value) return;
+    let raf = 0;
+    let start = 0;
+    const duration = 800;
 
-    const step = (timestamp) => {
-      if (!startTime) {
-        startTime = timestamp;
-      }
-
-      const progress = Math.min((timestamp - startTime) / duration, 1);
+    const step = (ts) => {
+      if (!start) start = ts;
+      const progress = Math.min((ts - start) / duration, 1);
       setDisplay(Math.round(value * progress));
-
-      if (progress < 1) {
-        rafId = window.requestAnimationFrame(step);
-      }
+      if (progress < 1) raf = requestAnimationFrame(step);
     };
 
-    rafId = window.requestAnimationFrame(step);
-    return () => window.cancelAnimationFrame(rafId);
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
   }, [value]);
 
-  return (
-    <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <p className="text-xs font-bold uppercase tracking-[0.15em] text-slate-500">{label}</p>
-      <p className="mt-2 text-4xl font-black tracking-tight text-slate-900">{display}</p>
-    </article>
-  );
+  return <>{display}</>;
 };
 
-const StatsSection = ({ stats, isLoading }) => {
-  return (
-    <MotionSection id="about" className="mx-auto w-full max-w-7xl scroll-mt-24 px-4 py-14 sm:px-6 lg:px-8">
-      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-cyan-50 to-blue-50 p-6 sm:p-8">
-        <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue-700">Platform Statistics</p>
-        <h2 className="mt-2 text-3xl font-black tracking-tight text-slate-900">Real-time growth snapshot</h2>
-        <p className="mt-2 text-sm text-slate-600">A quick view of community activity and content momentum across UniLink.</p>
+const statItems = [
+  {
+    key: "totalStudents",
+    label: "Students",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+      </svg>
+    ),
+    color: "text-sky-600",
+    bg: "bg-sky-50",
+  },
+  {
+    key: "totalFaculty",
+    label: "Faculty",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+      </svg>
+    ),
+    color: "text-blue-600",
+    bg: "bg-blue-50",
+  },
+  {
+    key: "totalBlogs",
+    label: "Blogs Published",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+      </svg>
+    ),
+    color: "text-violet-600",
+    bg: "bg-violet-50",
+  },
+  {
+    key: "totalResources",
+    label: "Resources",
+    icon: (
+      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+      </svg>
+    ),
+    color: "text-emerald-600",
+    bg: "bg-emerald-50",
+  },
+];
 
-        {isLoading ? (
-          <p className="mt-5 text-sm font-semibold text-slate-500">Loading statistics...</p>
-        ) : (
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <CounterCard label="Total Students" value={stats.totalStudents} />
-            <CounterCard label="Total Faculty" value={stats.totalFaculty} />
-            <CounterCard label="Total Blogs" value={stats.totalBlogs} />
-            <CounterCard label="Total Courses" value={stats.totalCourses} />
-          </div>
-        )}
+const StatsSection = ({ stats, isLoading }) => {
+  // Only show stats that have a value > 0
+  const activeStats = statItems.filter((s) => stats[s.key] > 0);
+
+  if (isLoading) {
+    return (
+      <MotionSection className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-center py-8">
+          <div className="h-6 w-6 animate-spin rounded-full border-4 border-slate-200 border-t-slate-500" />
+        </div>
+      </MotionSection>
+    );
+  }
+
+  if (activeStats.length === 0) return null;
+
+  return (
+    <MotionSection
+      id="stats"
+      className="mx-auto w-full max-w-7xl scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8"
+    >
+      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+        <p className="text-sm font-bold uppercase tracking-[0.18em] text-slate-400">
+          Platform at a Glance
+        </p>
+        <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
+          {activeStats.map((item) => (
+            <div
+              key={item.key}
+              className="flex items-center gap-3 rounded-xl border border-slate-100 p-4"
+            >
+              <div className={`shrink-0 rounded-xl p-2.5 ${item.bg} ${item.color}`}>
+                {item.icon}
+              </div>
+              <div>
+                <p className="text-2xl font-black tracking-tight text-slate-900">
+                  <CountUp value={stats[item.key]} />
+                </p>
+                <p className="text-xs font-semibold text-slate-500">{item.label}</p>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </MotionSection>
   );

@@ -8,6 +8,7 @@ const emptyForm = {
   price: "",
   contact: "",
   description: "",
+  mapUrl: "",
 };
 
 const AdminHostelsPage = () => {
@@ -85,6 +86,7 @@ const AdminHostelsPage = () => {
       price: hostel.price,
       contact: hostel.contact,
       description: hostel.description || "",
+      mapUrl: hostel.mapUrl || "",
     });
   };
 
@@ -131,6 +133,13 @@ const AdminHostelsPage = () => {
             value={form.contact}
             onChange={(event) => setForm((prev) => ({ ...prev, contact: event.target.value }))}
             required
+          />
+          <input
+            type="url"
+            className="md:col-span-2 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            placeholder="Google Maps link (right-click location → Share → Copy link)"
+            value={form.mapUrl}
+            onChange={(event) => setForm((prev) => ({ ...prev, mapUrl: event.target.value }))}
           />
           <textarea
             className="md:col-span-2 h-24 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"

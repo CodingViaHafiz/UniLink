@@ -1,20 +1,8 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { apiFetch } from "../lib/api";
 import { MotionPage } from "../lib/motion";
-
-const DEPARTMENTS = [
-  "Computer Science",
-  "Software Engineering",
-  "Electrical Engineering",
-  "Mechanical Engineering",
-  "Civil Engineering",
-  "Business Administration",
-  "Mathematics",
-  "Physics",
-  "Chemistry",
-  "Other",
-];
 
 const PASSWORD_RULES = [
   { label: "At least 8 characters", test: (p) => p.length >= 8 },
@@ -24,12 +12,13 @@ const PASSWORD_RULES = [
   { label: "One special character", test: (p) => /[^A-Za-z0-9]/.test(p) },
 ];
 
-const initialForm = {
-  fullName: "",
-  email: "",
-  password: "",
-  department: "",
-};
+const initialForm = { fullName: "", email: "", password: "", enrollmentNumber: "" };
+
+// Enrollment number lookup states
+const LOOKUP_IDLE = "idle";
+const LOOKUP_LOADING = "loading";
+const LOOKUP_VALID = "valid";
+const LOOKUP_INVALID = "invalid";
 
 const AuthPage = () => {
   const navigate = useNavigate();
@@ -41,34 +30,67 @@ const AuthPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
 
+  // Enrollment number lookup
+  const [lookupState, setLookupState] = useState(LOOKUP_IDLE);
+  const [lookupInfo, setLookupInfo] = useState(null); // { department, program, batch }
+  const lookupDebounce = useRef(null);
+
   if (isAuthenticated) {
     const nextPath = location.state?.from?.pathname || "/home";
     return <Navigate to={nextPath === "/login" ? "/home" : nextPath} replace />;
   }
 
-  const updateForm = (key, value) => {
-    setForm((previous) => ({ ...previous, [key]: value }));
-  };
+  const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
   const switchMode = (newMode) => {
     setMode(newMode);
     setForm(initialForm);
     setError("");
     setShowPasswordRules(false);
+    setLookupState(LOOKUP_IDLE);
+    setLookupInfo(null);
   };
+
+  // Debounced enrollment number lookup
+  const handleEnrollmentChange = (value) => {
+    updateForm("enrollmentNumber", value);
+    setLookupInfo(null);
+
+    if (lookupDebounce.current) clearTimeout(lookupDebounce.current);
+
+    const trimmed = value.trim().toUpperCase();
+    if (!trimmed) { setLookupState(LOOKUP_IDLE); return; }
+
+    setLookupState(LOOKUP_LOADING);
+    lookupDebounce.current = setTimeout(async () => {
+      try {
+        const data = await apiFetch(`/auth/enrollment/${encodeURIComponent(trimmed)}`, { method: "GET" });
+        setLookupState(LOOKUP_VALID);
+        setLookupInfo({ department: data.department, program: data.program, batch: data.batch });
+      } catch {
+        setLookupState(LOOKUP_INVALID);
+      }
+    }, 500);
+  };
+
+  // Cleanup debounce on unmount
+  useEffect(() => () => { if (lookupDebounce.current) clearTimeout(lookupDebounce.current); }, []);
 
   const onSubmit = async (event) => {
     event.preventDefault();
+    if (mode === "register" && lookupState !== LOOKUP_VALID) {
+      setError("Please enter a valid enrollment number before continuing.");
+      return;
+    }
     setIsSubmitting(true);
     setError("");
-
     try {
       if (mode === "register") {
         await register({
           fullName: form.fullName,
           email: form.email,
           password: form.password,
-          department: form.department,
+          enrollmentNumber: form.enrollmentNumber,
         });
       } else {
         await login({ email: form.email, password: form.password });
@@ -93,35 +115,28 @@ const AuthPage = () => {
         <p className="mt-1 text-sm text-slate-500">
           {mode === "login"
             ? "Faculty and admin accounts are created by the administrator."
-            : "Student self-registration. Faculty accounts are assigned by admin."}
+            : "Student registration requires your university enrollment number."}
         </p>
 
         <div className="mt-5 grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
-              mode === "login"
-                ? "border-blue-200 bg-blue-50 text-blue-700"
-                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-            }`}
-            onClick={() => switchMode("login")}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
-              mode === "register"
-                ? "border-blue-200 bg-blue-50 text-blue-700"
-                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-            }`}
-            onClick={() => switchMode("register")}
-          >
-            Register
-          </button>
+          {["login", "register"].map((m) => (
+            <button
+              key={m}
+              type="button"
+              className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
+                mode === m
+                  ? "border-blue-200 bg-blue-50 text-blue-700"
+                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+              }`}
+              onClick={() => switchMode(m)}
+            >
+              {m === "login" ? "Sign In" : "Register"}
+            </button>
+          ))}
         </div>
 
         <form className="mt-4 space-y-3" onSubmit={onSubmit}>
+          {/* Full Name */}
           {mode === "register" && (
             <label className="block">
               <span className="mb-1 block text-sm font-semibold text-slate-700">Full Name</span>
@@ -130,12 +145,78 @@ const AuthPage = () => {
                 className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-blue-200 focus:ring-2"
                 placeholder="e.g. Muhammad Ali"
                 value={form.fullName}
-                onChange={(event) => updateForm("fullName", event.target.value)}
+                onChange={(e) => updateForm("fullName", e.target.value)}
                 required
               />
             </label>
           )}
 
+          {/* Enrollment Number — register only */}
+          {mode === "register" && (
+            <label className="block">
+              <span className="mb-1 block text-sm font-semibold text-slate-700">
+                Enrollment Number
+              </span>
+              <div className="relative">
+                <input
+                  type="text"
+                  className={`w-full rounded-lg border px-3 py-2 pr-9 text-sm uppercase outline-none ring-blue-200 focus:ring-2 ${
+                    lookupState === LOOKUP_VALID
+                      ? "border-emerald-400 bg-emerald-50"
+                      : lookupState === LOOKUP_INVALID
+                      ? "border-rose-400 bg-rose-50"
+                      : "border-slate-300"
+                  }`}
+                  placeholder="e.g. FA21-BCS-001"
+                  value={form.enrollmentNumber}
+                  onChange={(e) => handleEnrollmentChange(e.target.value)}
+                  required
+                />
+                {/* Status icon */}
+                <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-base">
+                  {lookupState === LOOKUP_LOADING && (
+                    <svg className="h-4 w-4 animate-spin text-blue-500" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                    </svg>
+                  )}
+                  {lookupState === LOOKUP_VALID && (
+                    <svg className="h-4 w-4 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                  {lookupState === LOOKUP_INVALID && (
+                    <svg className="h-4 w-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  )}
+                </span>
+              </div>
+
+              {/* Auto-filled info */}
+              {lookupState === LOOKUP_VALID && lookupInfo && (
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {[
+                    { label: "Department", value: lookupInfo.department },
+                    { label: "Program", value: lookupInfo.program },
+                    { label: "Batch", value: lookupInfo.batch },
+                  ].map(({ label, value }) => (
+                    <div key={label} className="rounded-lg border border-emerald-100 bg-emerald-50 px-2.5 py-1.5">
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-emerald-500">{label}</p>
+                      <p className="text-xs font-semibold text-emerald-800">{value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {lookupState === LOOKUP_INVALID && (
+                <p className="mt-1 text-xs font-medium text-rose-600">
+                  Enrollment number not found or already registered. Contact the admin.
+                </p>
+              )}
+            </label>
+          )}
+
+          {/* Email */}
           <label className="block">
             <span className="mb-1 block text-sm font-semibold text-slate-700">Email Address</span>
             <input
@@ -143,18 +224,19 @@ const AuthPage = () => {
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-blue-200 focus:ring-2"
               placeholder="you@university.edu"
               value={form.email}
-              onChange={(event) => updateForm("email", event.target.value)}
+              onChange={(e) => updateForm("email", e.target.value)}
               required
             />
           </label>
 
+          {/* Password */}
           <label className="block">
             <span className="mb-1 block text-sm font-semibold text-slate-700">Password</span>
             <input
               type="password"
               className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-blue-200 focus:ring-2"
               value={form.password}
-              onChange={(event) => updateForm("password", event.target.value)}
+              onChange={(e) => updateForm("password", e.target.value)}
               onFocus={() => mode === "register" && setShowPasswordRules(true)}
               minLength={8}
               required
@@ -179,24 +261,6 @@ const AuthPage = () => {
             )}
           </label>
 
-          {mode === "register" && (
-            <label className="block">
-              <span className="mb-1 block text-sm font-semibold text-slate-700">Department</span>
-              <select
-                className="w-full rounded-lg border border-slate-300 px-3 py-2 text-sm outline-none ring-blue-200 focus:ring-2"
-                value={form.department}
-                onChange={(event) => updateForm("department", event.target.value)}
-              >
-                <option value="">Select department (optional)</option>
-                {DEPARTMENTS.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </label>
-          )}
-
           {error && (
             <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
               {error}
@@ -206,7 +270,7 @@ const AuthPage = () => {
           <button
             type="submit"
             className="w-full rounded-lg bg-blue-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
-            disabled={isSubmitting}
+            disabled={isSubmitting || (mode === "register" && lookupState === LOOKUP_LOADING)}
           >
             {isSubmitting
               ? "Please wait..."

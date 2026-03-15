@@ -20,7 +20,7 @@ const HomePage = () => {
     totalStudents: 0,
     totalFaculty: 0,
     totalBlogs: 0,
-    totalCourses: 0,
+    totalResources: 0,
   });
   const [statsLoading, setStatsLoading] = useState(true);
 
@@ -48,7 +48,7 @@ const HomePage = () => {
           totalStudents: 0,
           totalFaculty: 0,
           totalBlogs: 0,
-          totalCourses: 0,
+          totalResources: 0,
         });
       } finally {
         setStatsLoading(false);
@@ -72,7 +72,7 @@ const HomePage = () => {
   return (
     <MotionPage className="min-h-screen bg-slate-50">
       <HomeNavbar user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut} />
-      <HeroSection />
+      <HeroSection user={user} />
       <BlogSection blogs={blogs} isLoading={blogsLoading} error={blogsError} />
       <StatsSection stats={stats} isLoading={statsLoading} />
       <HomeFooter />

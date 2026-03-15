@@ -1,4 +1,5 @@
 import Blog from "../models/Blog.js";
+import Resource from "../models/Resource.js";
 import User from "../models/User.js";
 
 const toBlogResponse = (blog) => ({
@@ -131,21 +132,19 @@ export const deleteBlog = async (req, res) => {
 
 export const getPlatformStats = async (_req, res) => {
   try {
-    const [totalStudents, totalFaculty, totalBlogs] = await Promise.all([
+    const [totalStudents, totalFaculty, totalBlogs, totalResources] = await Promise.all([
       User.countDocuments({ role: "student" }),
       User.countDocuments({ role: "faculty" }),
       Blog.countDocuments(),
+      Resource.countDocuments(),
     ]);
-
-    // Placeholder until a dedicated Course model exists.
-    const totalCourses = 24;
 
     return res.status(200).json({
       stats: {
         totalStudents,
         totalFaculty,
         totalBlogs,
-        totalCourses,
+        totalResources,
       },
     });
   } catch (error) {

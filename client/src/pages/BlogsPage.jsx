@@ -44,15 +44,15 @@ const BlogsPage = () => {
   return (
     <MotionPage className="min-h-screen bg-slate-50">
       <HomeNavbar user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut} />
-      <section className="mx-auto w-full max-w-7xl px-4 pt-10 sm:px-6 lg:px-8">
-        <div className="mb-2 flex justify-end">
+      <section className="mx-auto w-full max-w-7xl px-4 pt-2 sm:px-6 lg:px-8">
+        {/* <div className="mb-2 flex justify-end">
           <Link
             to="/home"
             className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-600"
           >
             Back to Home
           </Link>
-        </div>
+        </div> */}
       </section>
       <BlogSection blogs={blogs} isLoading={isLoading} error={error} />
     </MotionPage>

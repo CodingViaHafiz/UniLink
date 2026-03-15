@@ -31,6 +31,11 @@ const hostelSchema = new mongoose.Schema(
       trim: true,
       maxlength: 800,
     },
+    mapUrl: {
+      type: String,
+      trim: true,
+      maxlength: 500,
+    },
     imageUrl: {
       type: String,
       trim: true,
