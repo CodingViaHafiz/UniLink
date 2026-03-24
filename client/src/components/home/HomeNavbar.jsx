@@ -28,19 +28,15 @@ const ThemeToggle = () => {
   );
 };
 
-const primaryLinks = [
-  { label: "Home", to: "/home", hash: "home" },
-  { label: "Blogs", to: "/blogs", hash: "blogs" },
+const NAV_LINKS = [
+  { label: "Home",      to: "/home",      hash: "home" },
+  { label: "Blogs",     to: "/blogs",     hash: "blogs" },
+  { label: "Resources", to: "/resources" },
+  { label: "Hostels",   to: "/hostels" },
+  { label: "About",     to: "/about" },
 ];
 
-const secondaryLinks = [
-  { label: "Hostels", to: "/hostels" },
-  { label: "About", to: "/about" },
-];
-
-const resourceLink = { label: "Resources", to: "/resources" };
-
-const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
+const HomeNavbar = ({ user }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
@@ -68,22 +64,7 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
           </Link>
 
           <div className="flex items-center gap-1">
-            {primaryLinks.map((item) => (
-              <Link
-                key={item.label}
-                className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-700"
-                to={getLinkTo(item)}
-              >
-                {item.label}
-              </Link>
-            ))}
-            <Link
-              className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-700"
-              to={resourceLink.to}
-            >
-              {resourceLink.label}
-            </Link>
-            {secondaryLinks.map((item) => (
+            {NAV_LINKS.map((item) => (
               <Link
                 key={item.label}
                 className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-700"
@@ -112,14 +93,13 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
 
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <button
-              type="button"
-              className="btn-press rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-xs font-bold text-rose-700 transition-colors hover:bg-rose-100"
-              onClick={onLogout}
-              disabled={isLoggingOut}
+            <Link
+              to="/profile"
+              className="btn-press flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-xs font-black text-sky-700 transition-colors hover:bg-sky-200"
+              title="Profile"
             >
-              {isLoggingOut ? "Logging out..." : "Logout"}
-            </button>
+              {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+            </Link>
           </div>
         </div>
 
@@ -145,24 +125,7 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
 
           {menuOpen && (
             <div className="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-2">
-              {primaryLinks.map((item) => (
-                <Link
-                  key={item.label}
-                  className="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
-                  to={getLinkTo(item)}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <Link
-                className="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
-                to={resourceLink.to}
-                onClick={() => setMenuOpen(false)}
-              >
-                {resourceLink.label}
-              </Link>
-              {secondaryLinks.map((item) => (
+              {NAV_LINKS.map((item) => (
                 <Link
                   key={item.label}
                   className="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
@@ -190,14 +153,16 @@ const HomeNavbar = ({ user, onLogout, isLoggingOut }) => {
                   Admin Dashboard
                 </Link>
               )}
-              <button
-                type="button"
-                className="mt-1 w-full rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-left text-sm font-bold text-rose-700"
-                onClick={onLogout}
-                disabled={isLoggingOut}
+              <Link
+                className="mt-1 flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100"
+                to="/profile"
+                onClick={() => setMenuOpen(false)}
               >
-                {isLoggingOut ? "Logging out..." : "Logout"}
-              </button>
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-[10px] font-black text-sky-700">
+                  {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+                </div>
+                Profile
+              </Link>
             </div>
           )}
         </div>

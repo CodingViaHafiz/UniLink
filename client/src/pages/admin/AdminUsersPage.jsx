@@ -1,7 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Pagination from "../../components/ui/Pagination";
 import { apiFetch } from "../../lib/api";
 import { MotionPage } from "../../lib/motion";
 import { notifyError, notifySuccess } from "../../lib/toast";
+
+// Number of rows shown per page in each admin table
+const USERS_PER_PAGE = 10;
+const ENROL_PER_PAGE = 10;
 
 const DEPARTMENTS = [
   "Computer Science",
@@ -38,6 +43,8 @@ const AdminUsersPage = () => {
   const [users, setUsers] = useState([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [filterRole, setFilterRole] = useState("");
+  // Separate page trackers for each table
+  const [usersPage, setUsersPage] = useState(1);
 
   // ── Staff form state ─────────────────────────────────────────────────────────
   const [staffForm, setStaffForm] = useState(emptyStaffForm);
@@ -49,6 +56,7 @@ const AdminUsersPage = () => {
   const [enrolForm, setEnrolForm] = useState(emptyEnrolForm);
   const [isAddingEnrol, setIsAddingEnrol] = useState(false);
   const [enrolFilter, setEnrolFilter] = useState("all"); // "all" | "used" | "unused"
+  const [enrolPage, setEnrolPage] = useState(1);
 
   // ── Load users ───────────────────────────────────────────────────────────────
   const loadUsers = async (role = "") => {
@@ -160,6 +168,26 @@ const AdminUsersPage = () => {
       setEnrolRecords((prev) => prev.filter((r) => r._id !== id));
     } catch (err) { notifyError(err.message); }
   };
+
+  // ── Pagination: slice users for current page ──────────────────────────────
+  const usersTotalPages = Math.ceil(users.length / USERS_PER_PAGE);
+  const paginatedUsers = useMemo(() => {
+    const start = (usersPage - 1) * USERS_PER_PAGE;
+    return users.slice(start, start + USERS_PER_PAGE);
+  }, [users, usersPage]);
+
+  // Reset users page when filter changes
+  useEffect(() => { setUsersPage(1); }, [filterRole]);
+
+  // ── Pagination: slice enrollment records for current page ─────────────────
+  const enrolTotalPages = Math.ceil(enrolRecords.length / ENROL_PER_PAGE);
+  const paginatedEnrol = useMemo(() => {
+    const start = (enrolPage - 1) * ENROL_PER_PAGE;
+    return enrolRecords.slice(start, start + ENROL_PER_PAGE);
+  }, [enrolRecords, enrolPage]);
+
+  // Reset enrollment page when filter changes
+  useEffect(() => { setEnrolPage(1); }, [enrolFilter]);
 
   return (
     <MotionPage className="space-y-6">
@@ -315,76 +343,81 @@ const AdminUsersPage = () => {
               <p className="mt-4 text-sm text-slate-500">No users found.</p>
             )}
 
+            {/* Paginated user table */}
             {!isLoadingUsers && users.length > 0 && (
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-195 border-collapse">
-                  <thead>
-                    <tr>
-                      {["Name", "Email", "Role", "Department", "Status", "Actions"].map((h) => (
-                        <th key={h} className="border-b border-slate-200 px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-400">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((user) => (
-                      <tr key={user.id} className="border-b border-slate-100 text-sm">
-                        <td className="px-3 py-3">
-                          <span className="font-semibold text-slate-900">{user.fullName}</span>
-                          {user.role === "faculty" && !user.isPasswordSet && (
-                            <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">
-                              Pending Setup
-                            </span>
-                          )}
-                        </td>
-                        <td className="px-3 py-3 text-slate-600">{user.email}</td>
-                        <td className="px-3 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-bold capitalize ${roleBadge[user.role]}`}>
-                            {user.role}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-slate-500">{user.department || "—"}</td>
-                        <td className="px-3 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${user.isActive ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
-                            {user.isActive ? "Active" : "Inactive"}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3">
-                          <div className="flex flex-wrap gap-1.5">
-                            {user.isActive ? (
-                              <button
-                                type="button"
-                                className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-                                onClick={() => handleDeactivate(user.id)}
-                              >
-                                Deactivate
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                className="rounded-lg border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
-                                onClick={() => handleReactivate(user.id)}
-                              >
-                                Reactivate
-                              </button>
-                            )}
-                            {user.role === "faculty" && !user.isPasswordSet && (
-                              <button
-                                type="button"
-                                className="rounded-lg border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
-                                onClick={() => handleResendSetup(user.id)}
-                              >
-                                Resend Email
-                              </button>
-                            )}
-                          </div>
-                        </td>
+              <>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full min-w-195 border-collapse">
+                    <thead>
+                      <tr>
+                        {["Name", "Email", "Role", "Department", "Status", "Actions"].map((h) => (
+                          <th key={h} className="border-b border-slate-200 px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-400">
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {paginatedUsers.map((user) => (
+                        <tr key={user.id} className="border-b border-slate-100 text-sm">
+                          <td className="px-3 py-3">
+                            <span className="font-semibold text-slate-900">{user.fullName}</span>
+                            {user.role === "faculty" && !user.isPasswordSet && (
+                              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">
+                                Pending Setup
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-3 py-3 text-slate-600">{user.email}</td>
+                          <td className="px-3 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-bold capitalize ${roleBadge[user.role]}`}>
+                              {user.role}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 text-slate-500">{user.department || "—"}</td>
+                          <td className="px-3 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${user.isActive ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"}`}>
+                              {user.isActive ? "Active" : "Inactive"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3">
+                            <div className="flex flex-wrap gap-1.5">
+                              {user.isActive ? (
+                                <button
+                                  type="button"
+                                  className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                                  onClick={() => handleDeactivate(user.id)}
+                                >
+                                  Deactivate
+                                </button>
+                              ) : (
+                                <button
+                                  type="button"
+                                  className="rounded-lg border border-emerald-200 px-3 py-1 text-xs font-semibold text-emerald-700 hover:bg-emerald-50"
+                                  onClick={() => handleReactivate(user.id)}
+                                >
+                                  Reactivate
+                                </button>
+                              )}
+                              {user.role === "faculty" && !user.isPasswordSet && (
+                                <button
+                                  type="button"
+                                  className="rounded-lg border border-blue-200 px-3 py-1 text-xs font-semibold text-blue-700 hover:bg-blue-50"
+                                  onClick={() => handleResendSetup(user.id)}
+                                >
+                                  Resend Email
+                                </button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Pagination controls for users table */}
+                <Pagination currentPage={usersPage} totalPages={usersTotalPages} onPageChange={setUsersPage} />
+              </>
             )}
           </section>
         </>
@@ -455,49 +488,54 @@ const AdminUsersPage = () => {
               <p className="mt-4 text-sm text-slate-500">No enrollment numbers found.</p>
             )}
 
+            {/* Paginated enrollment table */}
             {!isLoadingEnrol && enrolRecords.length > 0 && (
-              <div className="mt-4 overflow-x-auto">
-                <table className="w-full min-w-175 border-collapse">
-                  <thead>
-                    <tr>
-                      {["Enrollment #", "Department", "Program", "Batch", "Status", "Used By", ""].map((h) => (
-                        <th key={h} className="border-b border-slate-200 px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-400">
-                          {h}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {enrolRecords.map((r) => (
-                      <tr key={r._id} className="border-b border-slate-100 text-sm">
-                        <td className="px-3 py-3 font-mono font-semibold text-slate-800">{r.enrollmentNumber}</td>
-                        <td className="px-3 py-3 text-slate-600">{r.department}</td>
-                        <td className="px-3 py-3 text-slate-600">{r.program}</td>
-                        <td className="px-3 py-3 text-slate-600">{r.batch}</td>
-                        <td className="px-3 py-3">
-                          <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${r.isUsed ? "bg-slate-100 text-slate-500" : "bg-emerald-100 text-emerald-700"}`}>
-                            {r.isUsed ? "Used" : "Available"}
-                          </span>
-                        </td>
-                        <td className="px-3 py-3 text-slate-500">
-                          {r.usedBy ? r.usedBy.fullName : "—"}
-                        </td>
-                        <td className="px-3 py-3">
-                          {!r.isUsed && (
-                            <button
-                              type="button"
-                              className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
-                              onClick={() => handleDeleteEnrol(r._id)}
-                            >
-                              Delete
-                            </button>
-                          )}
-                        </td>
+              <>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full min-w-175 border-collapse">
+                    <thead>
+                      <tr>
+                        {["Enrollment #", "Department", "Program", "Batch", "Status", "Used By", ""].map((h) => (
+                          <th key={h} className="border-b border-slate-200 px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-400">
+                            {h}
+                          </th>
+                        ))}
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody>
+                      {paginatedEnrol.map((r) => (
+                        <tr key={r._id} className="border-b border-slate-100 text-sm">
+                          <td className="px-3 py-3 font-mono font-semibold text-slate-800">{r.enrollmentNumber}</td>
+                          <td className="px-3 py-3 text-slate-600">{r.department}</td>
+                          <td className="px-3 py-3 text-slate-600">{r.program}</td>
+                          <td className="px-3 py-3 text-slate-600">{r.batch}</td>
+                          <td className="px-3 py-3">
+                            <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${r.isUsed ? "bg-slate-100 text-slate-500" : "bg-emerald-100 text-emerald-700"}`}>
+                              {r.isUsed ? "Used" : "Available"}
+                            </span>
+                          </td>
+                          <td className="px-3 py-3 text-slate-500">
+                            {r.usedBy ? r.usedBy.fullName : "—"}
+                          </td>
+                          <td className="px-3 py-3">
+                            {!r.isUsed && (
+                              <button
+                                type="button"
+                                className="rounded-lg border border-rose-200 px-3 py-1 text-xs font-semibold text-rose-700 hover:bg-rose-50"
+                                onClick={() => handleDeleteEnrol(r._id)}
+                              >
+                                Delete
+                              </button>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {/* Pagination controls for enrollment table */}
+                <Pagination currentPage={enrolPage} totalPages={enrolTotalPages} onPageChange={setEnrolPage} />
+              </>
             )}
           </section>
         </>

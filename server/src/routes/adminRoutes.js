@@ -8,7 +8,6 @@ import {
 } from "../controllers/adminController.js";
 import {
   addEnrollmentNumber,
-  bulkAddEnrollmentNumbers,
   deleteEnrollmentNumber,
   getEnrollmentNumbers,
 } from "../controllers/enrollmentController.js";
@@ -28,7 +27,6 @@ router.post("/uploads/:resourceType", prepareUploadStructure);
 // Enrollment number management
 router.get("/enrollment-numbers", getEnrollmentNumbers);
 router.post("/enrollment-numbers", addEnrollmentNumber);
-router.post("/enrollment-numbers/bulk", bulkAddEnrollmentNumbers);
 router.delete("/enrollment-numbers/:id", deleteEnrollmentNumber);
 
 export default router;

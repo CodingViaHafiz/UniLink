@@ -8,6 +8,7 @@ import FacultyDashboardPage from "./pages/FacultyDashboardPage";
 import HostelsPage from "./pages/HostelsPage";
 import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
+import ProfilePage from "./pages/ProfilePage";
 import ResourcesTypePage from "./pages/ResourcesTypePage";
 import AdminLayoutPage from "./pages/admin/AdminLayoutPage";
 import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
@@ -16,6 +17,7 @@ import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
 import AdminOverviewPage from "./pages/admin/AdminOverviewPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import SetPasswordPage from "./pages/SetPasswordPage";
+import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import RoleRoute from "./routes/RoleRoute";
 import { useEffect } from "react";
@@ -54,6 +56,7 @@ function App() {
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/set-password/:token" element={<SetPasswordPage />} />
+        <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
 
         <Route element={<ProtectedRoute />}>
           <Route path="/home" element={<HomePage />} />
@@ -61,6 +64,7 @@ function App() {
           <Route path="/resources" element={<ResourcesTypePage />} />
           <Route path="/hostels" element={<HostelsPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
 
           <Route element={<RoleRoute allowedRoles={["faculty"]} />}>
             <Route path="/faculty-dashboard" element={<FacultyDashboardPage />} />

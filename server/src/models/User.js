@@ -53,6 +53,19 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Email verification (students only)
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      default: null,
+    },
+    verificationTokenExpiry: {
+      type: Date,
+      default: null,
+    },
     // Faculty "Set Your Password" flow
     isPasswordSet: {
       type: Boolean,

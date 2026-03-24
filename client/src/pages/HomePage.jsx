@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import BlogSection from "../components/home/BlogSection";
 import HeroSection from "../components/home/HeroSection";
 import HomeFooter from "../components/home/HomeFooter";
@@ -10,9 +9,7 @@ import { apiFetch } from "../lib/api";
 import { MotionPage } from "../lib/motion";
 
 const HomePage = () => {
-  const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const { user } = useAuth();
   const [blogs, setBlogs] = useState([]);
   const [blogsLoading, setBlogsLoading] = useState(true);
   const [blogsError, setBlogsError] = useState("");
@@ -59,19 +56,9 @@ const HomePage = () => {
     loadStats();
   }, []);
 
-  const handleLogout = async () => {
-    setIsLoggingOut(true);
-    try {
-      await logout();
-      navigate("/login", { replace: true });
-    } finally {
-      setIsLoggingOut(false);
-    }
-  };
-
   return (
     <MotionPage className="min-h-screen bg-slate-50">
-      <HomeNavbar user={user} onLogout={handleLogout} isLoggingOut={isLoggingOut} />
+      <HomeNavbar user={user} />
       <HeroSection user={user} />
       <BlogSection blogs={blogs} isLoading={blogsLoading} error={blogsError} />
       <StatsSection stats={stats} isLoading={statsLoading} />

@@ -10,7 +10,10 @@ import {
   reactivateUser,
   register,
   resendSetupEmail,
+  resendVerification,
   setPassword,
+  updateProfile,
+  verifyEmail,
   verifySetupToken,
 } from "../controllers/authController.js";
 import { authorizeRoles, protect } from "../middleware/authMiddleware.js";
@@ -29,8 +32,13 @@ router.get("/enrollment/:number", checkEnrollmentNumber);
 router.get("/verify-setup-token/:token", verifySetupToken);
 router.post("/set-password/:token", setPassword);
 
+// Student email verification
+router.post("/verify-email/:token", verifyEmail);
+router.post("/resend-verification", resendVerification);
+
 // ── Authenticated ─────────────────────────────────────────────────────────────
 router.get("/me", protect, me);
+router.put("/profile", protect, updateProfile);
 
 // ── Admin only ────────────────────────────────────────────────────────────────
 router.post("/staff", protect, authorizeRoles("admin"), createStaffAccount);

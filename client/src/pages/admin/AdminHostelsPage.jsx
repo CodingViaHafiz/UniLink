@@ -1,6 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Pagination from "../../components/ui/Pagination";
 import { API_BASE, apiFetch } from "../../lib/api";
 import { MotionPage } from "../../lib/motion";
+
+// Number of hostel items shown per page in the admin list
+const ITEMS_PER_PAGE = 10;
 
 const emptyForm = {
   name: "",
@@ -13,6 +17,8 @@ const emptyForm = {
 
 const AdminHostelsPage = () => {
   const [hostels, setHostels] = useState([]);
+  // Track which page the admin is currently viewing
+  const [currentPage, setCurrentPage] = useState(1);
   const [form, setForm] = useState(emptyForm);
   const [imageFile, setImageFile] = useState(null);
   const [editingId, setEditingId] = useState(null);
@@ -93,6 +99,19 @@ const AdminHostelsPage = () => {
   const handleDelete = async (id) => {
     await apiFetch(`/hostels/${id}`, { method: "DELETE" });
     setHostels((previous) => previous.filter((hostel) => hostel.id !== id));
+  };
+
+  // Calculate total pages and slice hostels for the current page
+  const totalPages = Math.ceil(hostels.length / ITEMS_PER_PAGE);
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return hostels.slice(start, start + ITEMS_PER_PAGE);
+  }, [hostels, currentPage]);
+
+  // Scroll to top when changing pages for better UX
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
@@ -184,37 +203,42 @@ const AdminHostelsPage = () => {
         {isLoading && <p className="mt-3 text-sm font-semibold text-slate-500">Loading hostels...</p>}
         {!isLoading && !error && hostels.length === 0 && <p className="mt-3 text-sm text-slate-600">No hostels added yet.</p>}
 
+        {/* Paginated hostel list */}
         {!isLoading && hostels.length > 0 && (
-          <div className="mt-4 space-y-3">
-            {hostels.map((hostel) => (
-              <div key={hostel.id} className="rounded-xl border border-slate-200 p-4">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <h3 className="text-base font-bold text-slate-900">{hostel.name}</h3>
-                    <p className="text-sm text-slate-600">{hostel.location}</p>
-                    <p className="mt-2 text-sm font-semibold text-emerald-700">{hostel.price}</p>
-                    <p className="text-sm text-slate-600">{hostel.contact}</p>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700"
-                      onClick={() => startEdit(hostel)}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      type="button"
-                      className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700"
-                      onClick={() => handleDelete(hostel.id)}
-                    >
-                      Delete
-                    </button>
+          <>
+            <div className="mt-4 space-y-3">
+              {paginated.map((hostel) => (
+                <div key={hostel.id} className="rounded-xl border border-slate-200 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{hostel.name}</h3>
+                      <p className="text-sm text-slate-600">{hostel.location}</p>
+                      <p className="mt-2 text-sm font-semibold text-emerald-700">{hostel.price}</p>
+                      <p className="text-sm text-slate-600">{hostel.contact}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-700"
+                        onClick={() => startEdit(hostel)}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700"
+                        onClick={() => handleDelete(hostel.id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+            {/* Pagination controls — only shown when there are multiple pages */}
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+          </>
         )}
       </section>
     </MotionPage>

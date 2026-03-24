@@ -26,8 +26,8 @@ export const AuthProvider = ({ children }) => {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    setUser(data.user);
-    return data.user;
+    // Register returns { needsVerification: true } — no auto-login
+    return data;
   };
 
   const login = async (payload) => {

@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import EnrollmentNumber from "../models/EnrollmentNumber.js";
 import User from "../models/User.js";
-import { sendPasswordSetupEmail } from "../services/emailService.js";
+import { sendPasswordSetupEmail, sendVerificationEmail } from "../services/emailService.js";
 import { clearAuthCookie, setAuthCookie, signToken } from "../utils/token.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -29,6 +29,7 @@ const sanitizeUser = (user) => ({
   enrollmentNumber: user.enrollmentNumber,
   isActive: user.isActive,
   isPasswordSet: user.isPasswordSet,
+  isVerified: user.isVerified,
   createdAt: user.createdAt,
 });
 
@@ -97,6 +98,10 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
+    // Generate email verification token
+    const verificationToken = generateSetupToken();
+    const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 h
+
     const user = await User.create({
       fullName: fullName.trim(),
       email: email.toLowerCase().trim(),
@@ -107,6 +112,9 @@ export const register = async (req, res) => {
       batch: enrolRecord.batch,
       enrollmentNumber: enrolRecord.enrollmentNumber,
       isPasswordSet: true,
+      isVerified: false,
+      verificationToken,
+      verificationTokenExpiry: verificationExpiry,
     });
 
     // Mark enrollment number as used
@@ -114,12 +122,19 @@ export const register = async (req, res) => {
     enrolRecord.usedBy = user._id;
     await enrolRecord.save();
 
-    const token = signToken({ id: user._id, role: user.role });
-    setAuthCookie(res, token);
+    // Send verification email (don't auto-login)
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    const verifyLink = `${clientUrl}/verify-email/${verificationToken}`;
+
+    await sendVerificationEmail({
+      to: user.email,
+      fullName: user.fullName,
+      verifyLink,
+    });
 
     return res.status(201).json({
-      message: "Account created successfully.",
-      user: sanitizeUser(user),
+      message: "Account created! Please check your email to verify your account.",
+      needsVerification: true,
     });
   } catch {
     return res.status(500).json({ message: "Registration failed. Please try again." });
@@ -152,9 +167,19 @@ export const login = async (req, res) => {
       return res.status(401).json({ message: "Invalid email or password." });
     }
 
+    // Validate password BEFORE revealing account status
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ message: "Invalid email or password." });
+    }
+
+    // Only after correct password — check verification & active status
+    if (user.role === "student" && !user.isVerified) {
+      return res.status(403).json({
+        message: "Please verify your email first.",
+        needsVerification: true,
+        email: user.email,
+      });
     }
 
     if (!user.isActive) {
@@ -244,6 +269,107 @@ export const logout = (_req, res) => {
 
 export const me = (req, res) => {
   return res.status(200).json({ user: sanitizeUser(req.user) });
+};
+
+// ─── Authenticated: Update own profile ────────────────────────────────────────
+
+export const updateProfile = async (req, res) => {
+  try {
+    const { fullName, program, batch, department } = req.body;
+    const user = await User.findById(req.user._id);
+
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    if (fullName !== undefined) {
+      const trimmed = fullName.trim();
+      if (trimmed.length < 2 || trimmed.length > 80) {
+        return res.status(400).json({ message: "Full name must be between 2 and 80 characters." });
+      }
+      user.fullName = trimmed;
+    }
+
+    if (program !== undefined) user.program = program.trim();
+    if (batch !== undefined) user.batch = batch.trim();
+    if (department !== undefined) user.department = department.trim().slice(0, 100);
+
+    await user.save();
+    return res.status(200).json({ message: "Profile updated.", user: sanitizeUser(user) });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to update profile.", error: error.message });
+  }
+};
+
+// ─── Public: Verify email (student clicks link from email) ────────────────────
+
+export const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const user = await User.findOne({
+      verificationToken: token,
+      verificationTokenExpiry: { $gt: new Date() },
+      isVerified: false,
+    });
+
+    if (!user) {
+      return res.status(400).json({
+        message: "This verification link is invalid or has expired.",
+      });
+    }
+
+    user.isVerified = true;
+    user.verificationToken = null;
+    user.verificationTokenExpiry = null;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Email verified successfully! You can now log in to UniLink.",
+    });
+  } catch {
+    return res.status(500).json({ message: "Verification failed. Please try again." });
+  }
+};
+
+// ─── Public: Resend verification email ────────────────────────────────────────
+
+export const resendVerification = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email?.trim()) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    if (!user) {
+      // Don't reveal whether the email exists
+      return res.status(200).json({ message: "If this email is registered, a verification link has been sent." });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ message: "This email is already verified. You can log in." });
+    }
+
+    // Refresh token and expiry
+    user.verificationToken = generateSetupToken();
+    user.verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    await user.save();
+
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    const verifyLink = `${clientUrl}/verify-email/${user.verificationToken}`;
+
+    await sendVerificationEmail({
+      to: user.email,
+      fullName: user.fullName,
+      verifyLink,
+    });
+
+    return res.status(200).json({
+      message: "Verification email sent! Please check your inbox.",
+    });
+  } catch {
+    return res.status(500).json({ message: "Failed to resend verification email." });
+  }
 };
 
 // ─── Admin: Create staff account ──────────────────────────────────────────────

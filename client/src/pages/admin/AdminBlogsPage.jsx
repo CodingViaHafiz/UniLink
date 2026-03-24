@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Pagination from "../../components/ui/Pagination";
 import { apiFetch } from "../../lib/api";
 import { MotionPage } from "../../lib/motion";
 
+// Number of blog items shown per page in the admin list
+const ITEMS_PER_PAGE = 10;
+
 const AdminBlogsPage = () => {
   const [blogs, setBlogs] = useState([]);
+  // Track which page the admin is currently viewing
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [form, setForm] = useState({ title: "", content: "" });
@@ -34,6 +40,19 @@ const AdminBlogsPage = () => {
   const handleDelete = async (id) => {
     await apiFetch(`/blogs/${id}`, { method: "DELETE" });
     setBlogs((previous) => previous.filter((blog) => blog.id !== id));
+  };
+
+  // Calculate total pages and slice blogs for the current page
+  const totalPages = Math.ceil(blogs.length / ITEMS_PER_PAGE);
+  const paginated = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return blogs.slice(start, start + ITEMS_PER_PAGE);
+  }, [blogs, currentPage]);
+
+  // Scroll to top when changing pages for better UX
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handlePublish = async (event) => {
@@ -106,30 +125,35 @@ const AdminBlogsPage = () => {
 
         {!isLoading && !error && blogs.length === 0 && <p className="mt-3 text-sm text-slate-600">No blogs yet.</p>}
 
+        {/* Paginated blog list */}
         {!isLoading && !error && blogs.length > 0 && (
-          <div className="mt-4 space-y-3">
-            {blogs.map((blog) => (
-              <article key={blog.id} className="rounded-xl border border-slate-200 p-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{blog.role}</p>
-                    <h3 className="text-base font-bold text-slate-900">{blog.title}</h3>
-                    <p className="mt-1 text-sm text-slate-600">{blog.content}</p>
-                    <p className="mt-2 text-xs font-semibold text-slate-500">
-                      {blog.author} � {new Date(blog.createdAt).toLocaleDateString()}
-                    </p>
+          <>
+            <div className="mt-4 space-y-3">
+              {paginated.map((blog) => (
+                <article key={blog.id} className="rounded-xl border border-slate-200 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-wide text-slate-400">{blog.role}</p>
+                      <h3 className="text-base font-bold text-slate-900">{blog.title}</h3>
+                      <p className="mt-1 text-sm text-slate-600">{blog.content}</p>
+                      <p className="mt-2 text-xs font-semibold text-slate-500">
+                        {blog.author} · {new Date(blog.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700"
+                      onClick={() => handleDelete(blog.id)}
+                    >
+                      Delete
+                    </button>
                   </div>
-                  <button
-                    type="button"
-                    className="rounded-lg border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700"
-                    onClick={() => handleDelete(blog.id)}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </article>
-            ))}
-          </div>
+                </article>
+              ))}
+            </div>
+            {/* Pagination controls — only shown when there are multiple pages */}
+            <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />
+          </>
         )}
       </section>
     </MotionPage>

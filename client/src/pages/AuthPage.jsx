@@ -29,6 +29,10 @@ const AuthPage = () => {
   const [showPasswordRules, setShowPasswordRules] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [verificationSent, setVerificationSent] = useState(false);
+  const [unverifiedEmail, setUnverifiedEmail] = useState("");
+  const [isResending, setIsResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState("");
 
   // Enrollment number lookup
   const [lookupState, setLookupState] = useState(LOOKUP_IDLE);
@@ -76,6 +80,22 @@ const AuthPage = () => {
   // Cleanup debounce on unmount
   useEffect(() => () => { if (lookupDebounce.current) clearTimeout(lookupDebounce.current); }, []);
 
+  const handleResendVerification = async (email) => {
+    setIsResending(true);
+    setResendMessage("");
+    try {
+      const data = await apiFetch("/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+      });
+      setResendMessage(data.message);
+    } catch (err) {
+      setResendMessage(err.message);
+    } finally {
+      setIsResending(false);
+    }
+  };
+
   const onSubmit = async (event) => {
     event.preventDefault();
     if (mode === "register" && lookupState !== LOOKUP_VALID) {
@@ -84,19 +104,32 @@ const AuthPage = () => {
     }
     setIsSubmitting(true);
     setError("");
+    setVerificationSent(false);
+    setUnverifiedEmail("");
     try {
       if (mode === "register") {
-        await register({
-          fullName: form.fullName,
-          email: form.email,
-          password: form.password,
-          enrollmentNumber: form.enrollmentNumber,
+        const data = await apiFetch("/auth/register", {
+          method: "POST",
+          body: JSON.stringify({
+            fullName: form.fullName,
+            email: form.email,
+            password: form.password,
+            enrollmentNumber: form.enrollmentNumber,
+          }),
         });
+        if (data.needsVerification) {
+          setVerificationSent(true);
+          return;
+        }
       } else {
         await login({ email: form.email, password: form.password });
       }
       navigate("/home", { replace: true });
     } catch (submitError) {
+      // Login blocked because email not verified
+      if (submitError.message?.includes("verify your email")) {
+        setUnverifiedEmail(form.email);
+      }
       setError(submitError.message);
     } finally {
       setIsSubmitting(false);
@@ -135,7 +168,44 @@ const AuthPage = () => {
           ))}
         </div>
 
-        <form className="mt-4 space-y-3" onSubmit={onSubmit}>
+        {/* ── Verification email sent (after registration) ── */}
+        {verificationSent && (
+          <div className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-100">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 className="mt-3 text-base font-black text-emerald-900">Check your email!</h3>
+            <p className="mt-1 text-sm text-emerald-700">
+              We've sent a verification link to <strong>{form.email}</strong>.
+              Click the link to activate your account.
+            </p>
+            <p className="mt-3 text-xs text-emerald-600">
+              Didn't receive it?{" "}
+              <button
+                type="button"
+                className="font-bold underline"
+                onClick={() => handleResendVerification(form.email)}
+                disabled={isResending}
+              >
+                {isResending ? "Sending..." : "Resend email"}
+              </button>
+            </p>
+            {resendMessage && (
+              <p className="mt-2 text-xs font-semibold text-emerald-700">{resendMessage}</p>
+            )}
+            <button
+              type="button"
+              className="btn-press mt-4 rounded-xl border border-emerald-200 px-4 py-2 text-sm font-bold text-emerald-700 hover:bg-emerald-100"
+              onClick={() => { setVerificationSent(false); switchMode("login"); }}
+            >
+              Go to Sign In
+            </button>
+          </div>
+        )}
+
+        <form className={`mt-4 space-y-3 ${verificationSent ? "hidden" : ""}`} onSubmit={onSubmit}>
           {/* Full Name */}
           {mode === "register" && (
             <label className="block">
@@ -262,9 +332,24 @@ const AuthPage = () => {
           </label>
 
           {error && (
-            <p className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
-              {error}
-            </p>
+            <div className="rounded-lg bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">
+              <p>{error}</p>
+              {unverifiedEmail && (
+                <div className="mt-2 border-t border-rose-100 pt-2">
+                  <button
+                    type="button"
+                    className="text-xs font-bold text-blue-600 underline"
+                    onClick={() => handleResendVerification(unverifiedEmail)}
+                    disabled={isResending}
+                  >
+                    {isResending ? "Sending..." : "Resend verification email"}
+                  </button>
+                  {resendMessage && (
+                    <p className="mt-1 text-xs font-semibold text-emerald-600">{resendMessage}</p>
+                  )}
+                </div>
+              )}
+            </div>
           )}
 
           <button
