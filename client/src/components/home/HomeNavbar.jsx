@@ -30,6 +30,7 @@ const ThemeToggle = () => {
 
 const NAV_LINKS = [
   { label: "Home",      to: "/home",      hash: "home" },
+  { label: "Feed",      to: "/feed" },
   { label: "Blogs",     to: "/blogs",     hash: "blogs" },
   { label: "Resources", to: "/resources" },
   { label: "Hostels",   to: "/hostels" },

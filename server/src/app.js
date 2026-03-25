@@ -7,6 +7,7 @@ import path from "path";
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
+import feedRoutes from "./routes/feedRoutes.js";
 import hostelRoutes from "./routes/hostelRoutes.js";
 import resourceRoutes from "./routes/resourceRoutes.js";
 
@@ -33,6 +34,7 @@ app.use("/api/blogs", blogRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/resources", resourceRoutes);
 app.use("/api/hostels", hostelRoutes);
+app.use("/api/feed", feedRoutes);
 
 app.use((err, _req, res, _next) => {
   if (err instanceof multer.MulterError) {

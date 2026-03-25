@@ -5,6 +5,7 @@ import AboutPage from "./pages/AboutPage";
 import AuthPage from "./pages/AuthPage";
 import BlogsPage from "./pages/BlogsPage";
 import FacultyDashboardPage from "./pages/FacultyDashboardPage";
+import FeedPage from "./pages/FeedPage";
 import HostelsPage from "./pages/HostelsPage";
 import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -64,6 +65,7 @@ function App() {
           <Route path="/resources" element={<ResourcesTypePage />} />
           <Route path="/hostels" element={<HostelsPage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/feed" element={<FeedPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
           <Route element={<RoleRoute allowedRoles={["faculty"]} />}>
