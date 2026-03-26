@@ -193,7 +193,7 @@ const HostelsPage = () => {
                 )}
 
                 <div className="mt-4 flex flex-wrap gap-2">
-                  {hostel.mapUrl && (
+                  {hostel.mapUrl && /^https?:\/\//i.test(hostel.mapUrl) && (
                     <>
                       <a
                         href={hostel.mapUrl}

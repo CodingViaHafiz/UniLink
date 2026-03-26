@@ -1,12 +1,15 @@
 import express from "express";
-import { createPost, deletePost, getPosts, reactToPost, togglePin, voteOnPoll } from "../controllers/feedController.js";
+import { createPost, deletePost, getPinnedPosts, getPosts, reactToPost, togglePin, voteOnPoll } from "../controllers/feedController.js";
 import { authorizeRoles, protect } from "../middleware/authMiddleware.js";
 import { createUploader } from "../middleware/upload.js";
 
 const router = express.Router();
 const upload = createUploader("feed", "images");
 
-// Public — anyone logged in can read the feed
+// Lightweight — only pinned posts (used by home page notice banner)
+router.get("/pinned", protect, getPinnedPosts);
+
+// Full feed — anyone logged in
 router.get("/", protect, getPosts);
 
 // Faculty / Admin — create & delete posts

@@ -3,6 +3,7 @@ import BlogSection from "../components/home/BlogSection";
 import HeroSection from "../components/home/HeroSection";
 import HomeFooter from "../components/home/HomeFooter";
 import HomeNavbar from "../components/home/HomeNavbar";
+import NoticeBanner from "../components/home/NoticeBanner";
 import StatsSection from "../components/home/StatsSection";
 import { useAuth } from "../hooks/useAuth";
 import { apiFetch } from "../lib/api";
@@ -59,6 +60,7 @@ const HomePage = () => {
   return (
     <MotionPage className="min-h-screen bg-slate-50">
       <HomeNavbar user={user} />
+      <NoticeBanner />
       <HeroSection user={user} />
       <BlogSection blogs={blogs} isLoading={blogsLoading} error={blogsError} />
       <StatsSection stats={stats} isLoading={statsLoading} />

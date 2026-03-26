@@ -68,7 +68,7 @@ const AdminOverviewPage = () => {
 
       <section className="grid gap-5 2xl:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)] 2xl:items-start">
         <div className="min-w-0">
-          <ActivityChart activity={activity} />
+          <ActivityChart stats={stats} activity={activity} />
         </div>
         <div className="min-w-0 space-y-5">
           <QuickActions items={quickActionLinks} />

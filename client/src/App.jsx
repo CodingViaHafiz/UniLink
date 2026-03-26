@@ -16,6 +16,7 @@ import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
 import AdminHostelsPage from "./pages/admin/AdminHostelsPage";
 import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
 import AdminOverviewPage from "./pages/admin/AdminOverviewPage";
+import AdminCalendarPage from "./pages/admin/AdminCalendarPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import SetPasswordPage from "./pages/SetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
@@ -79,6 +80,7 @@ function App() {
               <Route path="resources" element={<AdminResourcesPage />} />
               <Route path="blogs" element={<AdminBlogsPage />} />
               <Route path="hostels" element={<AdminHostelsPage />} />
+              <Route path="calendar" element={<AdminCalendarPage />} />
               <Route path="*" element={<Navigate to="/admin-dashboard" replace />} />
             </Route>
           </Route>

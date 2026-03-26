@@ -32,6 +32,28 @@ const toPostResponse = (post) => ({
   createdAt: post.createdAt,
 });
 
+/* ── Get pinned posts only (lightweight, for home page banner) ─────────── */
+
+export const getPinnedPosts = async (_req, res) => {
+  try {
+    const posts = await Post.find({ isPinned: true })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .select("content author role createdAt");
+    return res.status(200).json({
+      notices: posts.map((p) => ({
+        id: p._id.toString(),
+        content: p.content,
+        author: p.author,
+        role: p.role,
+        createdAt: p.createdAt,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to fetch notices.", error: error.message });
+  }
+};
+
 /* ── Get all posts (newest first, pinned on top) ──────────────────────────── */
 
 export const getPosts = async (_req, res) => {

@@ -1,6 +1,6 @@
 import Blog from "../models/Blog.js";
 import User from "../models/User.js";
-
+import Resource from "../models/Resource.js";
 const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "short" });
 
 const buildMonthBuckets = (monthsBack = 6) => {
@@ -29,14 +29,21 @@ const findBucketByDate = (buckets, inputDate) => {
 
 export const getAdminStats = async (_req, res) => {
   try {
-    const [totalUsers, totalStudents, totalFaculty, totalAdmins, totalBlogs] =
-      await Promise.all([
-        User.countDocuments(),
-        User.countDocuments({ role: "student" }),
-        User.countDocuments({ role: "faculty" }),
-        User.countDocuments({ role: "admin" }),
-        Blog.countDocuments(),
-      ]);
+    const [
+      totalUsers,
+      totalStudents,
+      totalFaculty,
+      totalAdmins,
+      totalBlogs,
+      totalResources,
+    ] = await Promise.all([
+      User.countDocuments(),
+      User.countDocuments({ role: "student" }),
+      User.countDocuments({ role: "faculty" }),
+      User.countDocuments({ role: "admin" }),
+      Blog.countDocuments(),
+      Resource.countDocuments(),
+    ]);
 
     return res.status(200).json({
       stats: {
@@ -45,6 +52,7 @@ export const getAdminStats = async (_req, res) => {
         totalFaculty,
         totalAdmins,
         totalBlogs,
+        totalResources,
       },
     });
   } catch (error) {
@@ -62,9 +70,10 @@ export const getAdminActivity = async (_req, res) => {
     startDate.setDate(1);
     startDate.setHours(0, 0, 0, 0);
 
-    const [users, blogs] = await Promise.all([
+    const [users, blogs, resources] = await Promise.all([
       User.find({ createdAt: { $gte: startDate } }).select("createdAt"),
       Blog.find({ createdAt: { $gte: startDate } }).select("createdAt"),
+      Resource.find({ createdAt: { $gte: startDate } }).select("createdAt"),
     ]);
 
     users.forEach((entry) => {
@@ -77,11 +86,17 @@ export const getAdminActivity = async (_req, res) => {
       if (bucket) bucket.blogs += 1;
     });
 
+    resources.forEach((entry) => {
+      const bucket = findBucketByDate(buckets, entry.createdAt);
+      if (bucket) bucket.resources = (bucket.resources || 0) + 1;
+    });
+
     const activity = buckets.map((bucket) => ({
       label: bucket.label,
       users: bucket.users,
       blogs: bucket.blogs,
-      total: bucket.users + bucket.blogs,
+      resources: bucket.resources || 0,
+      total: bucket.users + bucket.blogs + (bucket.resources || 0),
     }));
 
     return res.status(200).json({ activity });

@@ -19,12 +19,19 @@ const toHostelResponse = (hostel, req) => ({
   createdAt: hostel.createdAt,
 });
 
+// Only allow http/https URLs — blocks javascript: and other dangerous protocols
+const isSafeUrl = (url) => !url || /^https?:\/\//i.test(url);
+
 export const createHostel = async (req, res) => {
   try {
     const { name, location, price, contact, description, mapUrl } = req.body;
 
     if (!name || !location || !price || !contact) {
       return res.status(400).json({ message: "Name, location, price, and contact are required." });
+    }
+
+    if (mapUrl && !isSafeUrl(mapUrl)) {
+      return res.status(400).json({ message: "Map URL must start with http:// or https://" });
     }
 
     const hostel = await Hostel.create({
@@ -64,6 +71,10 @@ export const updateHostel = async (req, res) => {
     const hostel = await Hostel.findById(id);
     if (!hostel) {
       return res.status(404).json({ message: "Hostel not found." });
+    }
+
+    if (mapUrl !== undefined && !isSafeUrl(mapUrl)) {
+      return res.status(400).json({ message: "Map URL must start with http:// or https://" });
     }
 
     if (name) hostel.name = name;

@@ -13,6 +13,7 @@ export const adminSidebarSections = [
       { label: "Resources", to: "/admin-dashboard/resources" },
       { label: "Blogs", to: "/admin-dashboard/blogs" },
       { label: "Hostels", to: "/admin-dashboard/hostels" },
+      { label: "Calendar", to: "/admin-dashboard/calendar" },
     ],
   },
 ];
