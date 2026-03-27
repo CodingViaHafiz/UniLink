@@ -5,6 +5,7 @@ import HomeFooter from "../components/home/HomeFooter";
 import HomeNavbar from "../components/home/HomeNavbar";
 import NoticeBanner from "../components/home/NoticeBanner";
 import StatsSection from "../components/home/StatsSection";
+import VisionMission from "../components/home/VisionMission";
 import { useAuth } from "../hooks/useAuth";
 import { apiFetch } from "../lib/api";
 import { MotionPage } from "../lib/motion";
@@ -62,6 +63,7 @@ const HomePage = () => {
       <HomeNavbar user={user} />
       <NoticeBanner />
       <HeroSection user={user} />
+      <VisionMission />
       <BlogSection blogs={blogs} isLoading={blogsLoading} error={blogsError} />
       <StatsSection stats={stats} isLoading={statsLoading} />
       <HomeFooter />

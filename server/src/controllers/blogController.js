@@ -2,19 +2,25 @@ import Blog from "../models/Blog.js";
 import Resource from "../models/Resource.js";
 import User from "../models/User.js";
 
-const toBlogResponse = (blog) => ({
+const toBlogResponse = (blog, req) => ({
   id: blog._id,
   title: blog.title,
   content: blog.content,
   author: blog.author,
   authorId: blog.authorId,
   role: blog.role,
+  category: blog.category || "general",
+  imageUrl: blog.imageUrl
+    ? blog.imageUrl.startsWith("http")
+      ? blog.imageUrl
+      : `${req.protocol}://${req.get("host")}${blog.imageUrl}`
+    : "",
   createdAt: blog.createdAt,
 });
 
 export const createBlog = async (req, res) => {
   try {
-    const { title, content } = req.body;
+    const { title, content, category } = req.body;
 
     if (!title || !content) {
       return res
@@ -40,11 +46,13 @@ export const createBlog = async (req, res) => {
       author: req.user.fullName,
       authorId: req.user._id,
       role: req.user.role,
+      category: category || "general",
+      imageUrl: req.file ? `/uploads/blogs/${req.file.filename}` : "",
     });
 
     return res.status(201).json({
       message: "Blog created successfully.",
-      blog: toBlogResponse(blog),
+      blog: toBlogResponse(blog, req),
     });
   } catch (error) {
     const status = error.name === "ValidationError" ? 400 : 500;
@@ -54,12 +62,12 @@ export const createBlog = async (req, res) => {
   }
 };
 
-export const getPublishedBlogs = async (_req, res) => {
+export const getPublishedBlogs = async (req, res) => {
   try {
     const blogs = await Blog.find({ role: { $in: ["faculty", "admin"] } })
       .sort({ createdAt: -1 })
       .limit(50);
-    return res.status(200).json({ blogs: blogs.map(toBlogResponse) });
+    return res.status(200).json({ blogs: blogs.map((b) => toBlogResponse(b, req)) });
   } catch (error) {
     return res
       .status(500)
@@ -74,7 +82,7 @@ export const getMyBlogs = async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .limit(50);
-    return res.status(200).json({ blogs: blogs.map(toBlogResponse) });
+    return res.status(200).json({ blogs: blogs.map((b) => toBlogResponse(b, req)) });
   } catch (error) {
     return res
       .status(500)
@@ -126,7 +134,7 @@ export const updateBlog = async (req, res) => {
       .status(200)
       .json({
         message: "Blog updated successfully.",
-        blog: toBlogResponse(blog),
+        blog: toBlogResponse(blog, req),
       });
   } catch (error) {
     const status = error.name === "ValidationError" ? 400 : 500;

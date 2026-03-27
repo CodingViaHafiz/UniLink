@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Pagination from "../../components/ui/Pagination";
-import { apiFetch } from "../../lib/api";
+import { API_BASE, apiFetch } from "../../lib/api";
 import { MotionPage } from "../../lib/motion";
 
 // Number of blog items shown per page in the admin list
@@ -12,7 +12,8 @@ const AdminBlogsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
-  const [form, setForm] = useState({ title: "", content: "" });
+  const [form, setForm] = useState({ title: "", content: "", category: "general" });
+  const [imageFile, setImageFile] = useState(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", text: "" });
 
@@ -61,12 +62,23 @@ const AdminBlogsPage = () => {
     setFeedback({ type: "", text: "" });
 
     try {
-      const data = await apiFetch("/blogs", {
+      const payload = new FormData();
+      payload.append("title", form.title);
+      payload.append("content", form.content);
+      payload.append("category", form.category);
+      if (imageFile) payload.append("image", imageFile);
+
+      const response = await fetch(`${API_BASE}/blogs`, {
         method: "POST",
-        body: JSON.stringify(form),
+        credentials: "include",
+        body: payload,
       });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Failed to publish blog.");
+
       setBlogs((previous) => [data.blog, ...previous]);
-      setForm({ title: "", content: "" });
+      setForm({ title: "", content: "", category: "general" });
+      setImageFile(null);
       setFeedback({ type: "success", text: "Blog published successfully." });
     } catch (submitError) {
       setFeedback({ type: "error", text: submitError.message });
@@ -81,21 +93,40 @@ const AdminBlogsPage = () => {
         <h1 className="text-2xl font-black tracking-tight text-slate-900">Blog Management</h1>
         <p className="mt-2 text-sm text-slate-600">Publish updates or remove outdated posts.</p>
         <form className="mt-4 space-y-3" onSubmit={handlePublish}>
-          <input
-            type="text"
-            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-            placeholder="Blog title"
-            value={form.title}
-            onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
-            required
-          />
+          <div className="grid gap-3 sm:grid-cols-2">
+            <input
+              type="text"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              placeholder="Blog title"
+              value={form.title}
+              onChange={(event) => setForm((prev) => ({ ...prev, title: event.target.value }))}
+              required
+            />
+            <select
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              value={form.category}
+              onChange={(event) => setForm((prev) => ({ ...prev, category: event.target.value }))}
+            >
+              <option value="general">General</option>
+              <option value="announcement">Announcement</option>
+              <option value="academic">Academic</option>
+              <option value="research">Research</option>
+              <option value="campus">Campus Life</option>
+            </select>
+          </div>
           <textarea
             className="h-32 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-            placeholder="Write the announcement"
+            placeholder="Write the blog content"
             value={form.content}
             onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
             minLength={20}
             required
+          />
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+            onChange={(event) => setImageFile(event.target.files?.[0] || null)}
           />
           {feedback.text && (
             <p

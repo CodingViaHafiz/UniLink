@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import ResourceUpload from "../components/resources/ResourceUpload";
 import { useAuth } from "../hooks/useAuth";
-import { apiFetch } from "../lib/api";
+import { API_BASE, apiFetch } from "../lib/api";
 import { MotionPage } from "../lib/motion";
 
 const tabs = [
@@ -66,7 +66,8 @@ const FacultyDashboardPage = () => {
   const [error, setError] = useState("");
   const [resourceEditing, setResourceEditing] = useState(null);
   const [blogEditing, setBlogEditing] = useState(null);
-  const [blogForm, setBlogForm] = useState({ title: "", content: "" });
+  const [blogForm, setBlogForm] = useState({ title: "", content: "", category: "general" });
+  const [blogImage, setBlogImage] = useState(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", text: "" });
 
@@ -105,12 +106,23 @@ const FacultyDashboardPage = () => {
     setFeedback({ type: "", text: "" });
     setIsPublishing(true);
     try {
-      const data = await apiFetch("/blogs", {
+      const payload = new FormData();
+      payload.append("title", blogForm.title);
+      payload.append("content", blogForm.content);
+      payload.append("category", blogForm.category);
+      if (blogImage) payload.append("image", blogImage);
+
+      const response = await fetch(`${API_BASE}/blogs`, {
         method: "POST",
-        body: JSON.stringify(blogForm),
+        credentials: "include",
+        body: payload,
       });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Failed to publish blog.");
+
       setBlogs((prev) => [data.blog, ...prev]);
-      setBlogForm({ title: "", content: "" });
+      setBlogForm({ title: "", content: "", category: "general" });
+      setBlogImage(null);
       setFeedback({ type: "success", text: "Blog published successfully." });
     } catch (submitError) {
       setFeedback({ type: "error", text: submitError.message });
@@ -434,14 +446,27 @@ const FacultyDashboardPage = () => {
                 <h2 className="text-xl font-black text-slate-900">Write a Blog</h2>
                 <p className="mt-1 text-sm text-slate-500">Share insights and updates with the community.</p>
                 <form className="mt-5 space-y-4" onSubmit={handleBlogSubmit}>
-                  <input
-                    type="text"
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none ring-blue-200 focus:ring-2"
-                    placeholder="Blog title"
-                    value={blogForm.title}
-                    onChange={(e) => setBlogForm((p) => ({ ...p, title: e.target.value }))}
-                    required
-                  />
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <input
+                      type="text"
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none ring-blue-200 focus:ring-2"
+                      placeholder="Blog title"
+                      value={blogForm.title}
+                      onChange={(e) => setBlogForm((p) => ({ ...p, title: e.target.value }))}
+                      required
+                    />
+                    <select
+                      className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none ring-blue-200 focus:ring-2"
+                      value={blogForm.category}
+                      onChange={(e) => setBlogForm((p) => ({ ...p, category: e.target.value }))}
+                    >
+                      <option value="general">General</option>
+                      <option value="announcement">Announcement</option>
+                      <option value="academic">Academic</option>
+                      <option value="research">Research</option>
+                      <option value="campus">Campus Life</option>
+                    </select>
+                  </div>
                   <textarea
                     className="h-36 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none ring-blue-200 focus:ring-2"
                     placeholder="Share your blog content..."
@@ -449,6 +474,12 @@ const FacultyDashboardPage = () => {
                     onChange={(e) => setBlogForm((p) => ({ ...p, content: e.target.value }))}
                     minLength={20}
                     required
+                  />
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                    onChange={(e) => setBlogImage(e.target.files?.[0] || null)}
                   />
                   {feedback.text && (
                     <p

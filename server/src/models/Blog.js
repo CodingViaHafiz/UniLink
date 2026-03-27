@@ -29,6 +29,15 @@ const blogSchema = new mongoose.Schema(
       enum: ["faculty", "admin"],
       required: true,
     },
+    category: {
+      type: String,
+      enum: ["announcement", "academic", "research", "campus", "general"],
+      default: "general",
+    },
+    imageUrl: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

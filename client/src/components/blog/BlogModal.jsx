@@ -1,12 +1,28 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 
-const roleBadge = {
-  faculty: "bg-blue-100 text-blue-700",
-  admin: "bg-emerald-100 text-emerald-700",
+const CATEGORY_LABEL = {
+  announcement: "Announcement",
+  academic: "Academic",
+  research: "Research",
+  campus: "Campus Life",
+  general: "General",
 };
 
-const BlogModal = ({ blog, onClose }) => {
+const getReadTime = (content) => Math.max(1, Math.ceil((content || "").split(/\s+/).length / 200));
+
+const BlogModal = ({ blog: initialBlog, onClose, allBlogs = [] }) => {
+  const [blog, setBlog] = useState(initialBlog);
+  const readTime = getReadTime(blog.content);
+  const date = new Date(blog.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" });
+  const popular = allBlogs.filter((b) => b.id !== blog.id).slice(0, 4);
+
+  // Switch to a different blog (from popular posts)
+  const switchBlog = (newBlog) => {
+    setBlog(newBlog);
+    window.document.getElementById("blog-reader-top")?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   useEffect(() => {
     const handleKey = (e) => { if (e.key === "Escape") onClose(); };
     document.addEventListener("keydown", handleKey);
@@ -18,54 +34,116 @@ const BlogModal = ({ blog, onClose }) => {
   }, [onClose]);
 
   return createPortal(
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
-      style={{ backdropFilter: "blur(6px)", backgroundColor: "rgba(15,23,42,0.55)" }}
-      onClick={onClose}
-    >
-      <div
-        className="relative flex w-full max-w-lg flex-col overflow-hidden rounded-2xl bg-white shadow-2xl"
-        style={{ maxHeight: "85vh" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
-          <div className="min-w-0">
-            <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold capitalize ${roleBadge[blog.role] || "bg-slate-100 text-slate-600"}`}>
-              {blog.role}
-            </span>
-            <h2 className="mt-2 text-lg font-black leading-snug text-slate-900">{blog.title}</h2>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="shrink-0 rounded-full border border-slate-200 p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700"
-            aria-label="Close"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
-            </svg>
-          </button>
+    <div className="fixed inset-0 z-50 bg-white" id="blog-reader-top">
+      {/* Top bar */}
+      <div className="sticky top-0 z-10 flex items-center justify-between border-b border-slate-100 bg-white/95 px-4 py-3 backdrop-blur sm:px-8">
+        <div className="flex items-center gap-3">
+          <span className="text-xs font-semibold text-slate-400">Blog</span>
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
+          <span className="text-xs font-semibold text-slate-600 line-clamp-1 max-w-xs">{blog.title}</span>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          className="rounded-full border border-slate-200 px-4 py-1.5 text-xs font-bold text-slate-600 transition-colors hover:bg-slate-50"
+        >
+          Back
+        </button>
+      </div>
 
-        <div className="flex-1 overflow-y-auto px-5 py-4">
-          <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-600">{blog.content}</p>
-        </div>
-
-        <div className="shrink-0 border-t border-slate-100 px-5 py-3">
-          <div className="flex items-center justify-between">
-            <div className="text-xs text-slate-400">
-              <span className="font-semibold text-slate-500">{blog.author}</span>
-              <span className="mx-1.5">-</span>
-              <span>{new Date(blog.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}</span>
+      {/* Scrollable content */}
+      <div className="h-[calc(100vh-49px)] overflow-y-auto">
+        {/* Hero image */}
+        <div className="relative aspect-[21/9] w-full overflow-hidden bg-slate-100">
+          {blog.imageUrl ? (
+            <img src={blog.imageUrl} alt={blog.title} className="h-full w-full object-cover" />
+          ) : (
+            <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-slate-800 via-blue-900 to-cyan-800">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-16 w-16 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+              </svg>
             </div>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 transition-colors hover:bg-slate-50"
-            >
-              Close
-            </button>
+          )}
+          {/* Title overlay */}
+          <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent px-6 pb-6 pt-16 sm:px-12 lg:px-20">
+            <h1 className="max-w-3xl text-2xl font-black leading-snug text-white sm:text-3xl lg:text-4xl">
+              {blog.title}
+            </h1>
           </div>
+        </div>
+
+        {/* Author row */}
+        <div className="mx-auto max-w-5xl px-6 sm:px-12 lg:px-20">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 py-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-600">
+                {blog.author?.charAt(0)?.toUpperCase() || "U"}
+              </div>
+              <div>
+                <p className="text-sm font-bold text-slate-900">{blog.author}</p>
+                <p className="text-xs text-slate-400">{date}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-500">
+                {CATEGORY_LABEL[blog.category] || "General"}
+              </span>
+              <span className="text-xs font-semibold text-slate-400">{readTime} min read</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Content + Sidebar */}
+        <div className="mx-auto max-w-5xl px-6 py-8 sm:px-12 lg:flex lg:gap-10 lg:px-20">
+          {/* Article */}
+          <article className="min-w-0 flex-1">
+            <div className="whitespace-pre-wrap text-base leading-8 text-slate-700">
+              {blog.content}
+            </div>
+          </article>
+
+          {/* Popular Posts sidebar */}
+          {popular.length > 0 && (
+            <aside className="mt-10 shrink-0 lg:mt-0 lg:w-72">
+              <h4 className="mb-4 text-sm font-black uppercase tracking-wide text-slate-400">Popular Posts</h4>
+              <div className="space-y-3">
+                {popular.map((post) => {
+                  const postDate = new Date(post.createdAt).toLocaleDateString("en-US", { day: "numeric", month: "short" });
+                  return (
+                    <button
+                      key={post.id}
+                      type="button"
+                      onClick={() => switchBlog(post)}
+                      className="flex w-full gap-3 rounded-xl border border-slate-100 p-3 text-left transition-all hover:border-slate-200 hover:bg-slate-50 hover:shadow-sm"
+                    >
+                      <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-slate-100">
+                        {post.imageUrl ? (
+                          <img src={post.imageUrl} alt={post.title} className="h-full w-full object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-slate-100 to-slate-200">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-bold leading-snug text-slate-900 line-clamp-2">{post.title}</p>
+                        <p className="mt-1.5 text-[11px] text-slate-400">
+                          {post.author} · {postDate}
+                        </p>
+                        <span className="mt-1 inline-block text-[10px] font-bold text-sky-600 hover:text-sky-700">
+                          Read More →
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </aside>
+          )}
         </div>
       </div>
     </div>,

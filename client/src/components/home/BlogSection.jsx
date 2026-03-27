@@ -1,11 +1,8 @@
-import { useState } from "react";
 import { Link } from "react-router-dom";
 import { MotionSection } from "../../lib/motion";
 import BlogCard from "../blog/BlogCard";
-import BlogModal from "../blog/BlogModal";
 
 const BlogSection = ({ blogs, isLoading, error }) => {
-  const [viewing, setViewing] = useState(null);
   const preview = blogs.slice(0, 3);
 
   return (
@@ -51,7 +48,7 @@ const BlogSection = ({ blogs, isLoading, error }) => {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {preview.map((blog) => (
-              <BlogCard key={blog.id} blog={blog} onReadMore={setViewing} />
+              <BlogCard key={blog.id} blog={blog} onReadMore={() => {}} />
             ))}
           </div>
 
@@ -68,8 +65,6 @@ const BlogSection = ({ blogs, isLoading, error }) => {
           </div>
         </>
       )}
-
-      {viewing && <BlogModal blog={viewing} onClose={() => setViewing(null)} />}
     </MotionSection>
   );
 };
