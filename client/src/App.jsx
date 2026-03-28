@@ -5,7 +5,12 @@ import AboutPage from "./pages/AboutPage";
 import AuthPage from "./pages/AuthPage";
 import BlogsPage from "./pages/BlogsPage";
 import FacultyDashboardPage from "./pages/FacultyDashboardPage";
+import FeedbackPage from "./pages/FeedbackPage";
 import FeedPage from "./pages/FeedPage";
+import FocusTimerPage from "./pages/FocusTimerPage";
+import GpaCalculatorPage from "./pages/GpaCalculatorPage";
+import LostFoundPage from "./pages/LostFoundPage";
+import MarketplacePage from "./pages/MarketplacePage";
 import HostelsPage from "./pages/HostelsPage";
 import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -17,6 +22,9 @@ import AdminHostelsPage from "./pages/admin/AdminHostelsPage";
 import AdminResourcesPage from "./pages/admin/AdminResourcesPage";
 import AdminOverviewPage from "./pages/admin/AdminOverviewPage";
 import AdminCalendarPage from "./pages/admin/AdminCalendarPage";
+import AdminFeedbackPage from "./pages/admin/AdminFeedbackPage";
+import AdminLostFoundPage from "./pages/admin/AdminLostFoundPage";
+import AdminMarketplacePage from "./pages/admin/AdminMarketplacePage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import SetPasswordPage from "./pages/SetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
@@ -67,6 +75,11 @@ function App() {
           <Route path="/hostels" element={<HostelsPage />} />
           <Route path="/about" element={<AboutPage />} />
           <Route path="/feed" element={<FeedPage />} />
+          <Route path="/focus-timer" element={<FocusTimerPage />} />
+          <Route path="/gpa-calculator" element={<GpaCalculatorPage />} />
+          <Route path="/feedback" element={<FeedbackPage />} />
+          <Route path="/marketplace" element={<MarketplacePage />} />
+          <Route path="/lost-found" element={<LostFoundPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
           <Route element={<RoleRoute allowedRoles={["faculty"]} />}>
@@ -81,6 +94,9 @@ function App() {
               <Route path="blogs" element={<AdminBlogsPage />} />
               <Route path="hostels" element={<AdminHostelsPage />} />
               <Route path="calendar" element={<AdminCalendarPage />} />
+              <Route path="feedback" element={<AdminFeedbackPage />} />
+              <Route path="marketplace" element={<AdminMarketplacePage />} />
+              <Route path="lost-found" element={<AdminLostFoundPage />} />
               <Route path="*" element={<Navigate to="/admin-dashboard" replace />} />
             </Route>
           </Route>

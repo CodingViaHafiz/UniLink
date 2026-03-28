@@ -16,6 +16,14 @@ export const adminSidebarSections = [
       { label: "Calendar", to: "/admin-dashboard/calendar" },
     ],
   },
+  {
+    title: "Approvals",
+    links: [
+      { label: "Feedback", to: "/admin-dashboard/feedback" },
+      { label: "Marketplace", to: "/admin-dashboard/marketplace" },
+      { label: "Lost & Found", to: "/admin-dashboard/lost-found" },
+    ],
+  },
 ];
 
 export const quickActionLinks = [

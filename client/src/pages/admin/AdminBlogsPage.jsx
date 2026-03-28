@@ -38,6 +38,17 @@ const AdminBlogsPage = () => {
     loadAll();
   }, []);
 
+  // Apply this to any input, textarea, or contentEditable
+  const handlePaste = (e) => {
+    e.preventDefault(); // stop default paste
+    // Get plain text from clipboard
+    let text = e.clipboardData.getData("text/plain");
+    // Remove zero-width / hidden characters
+    text = text.replace(/[\u200B-\u200D\uFEFF]/g, "");
+    // Insert clean text
+    document.execCommand("insertText", false, text);
+  };
+
   const handleDelete = async (id) => {
     await apiFetch(`/blogs/${id}`, { method: "DELETE" });
     setBlogs((previous) => previous.filter((blog) => blog.id !== id));
@@ -121,6 +132,7 @@ const AdminBlogsPage = () => {
             onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
             minLength={20}
             required
+            onPaste={handlePaste}
           />
           <input
             type="file"

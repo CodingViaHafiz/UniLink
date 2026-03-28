@@ -1,8 +1,9 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { MotionSection } from "../../lib/motion";
 import BlogCard from "../blog/BlogCard";
 
 const BlogSection = ({ blogs, isLoading, error }) => {
+  const navigate = useNavigate();
   const preview = blogs.slice(0, 3);
 
   return (
@@ -10,13 +11,16 @@ const BlogSection = ({ blogs, isLoading, error }) => {
       id="blogs"
       className="mx-auto w-full max-w-7xl scroll-mt-24 px-4 py-6 sm:px-6 lg:px-8"
     >
-      <div className="mb-7">
-        <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-900 sm:text-3xl">
-          Latest Blogs
-        </h2>
-        <p className="mt-1 text-sm text-slate-500">
-          Insights and updates from faculty and administrators.
-        </p>
+      <div className="mb-7 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-100">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-violet-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+          </svg>
+        </div>
+        <div>
+          <h2 className="text-lg font-black text-slate-900 sm:text-xl">Latest Blogs</h2>
+          <p className="text-xs text-slate-500">Insights and updates from faculty and administrators.</p>
+        </div>
       </div>
 
       {/* Loading */}
@@ -48,7 +52,7 @@ const BlogSection = ({ blogs, isLoading, error }) => {
         <>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {preview.map((blog) => (
-              <BlogCard key={blog.id} blog={blog} onReadMore={() => {}} />
+              <BlogCard key={blog.id} blog={blog} onReadMore={(b) => navigate("/blogs", { state: { viewBlog: b } })} />
             ))}
           </div>
 

@@ -93,9 +93,17 @@ const StatsSection = ({ stats, isLoading }) => {
       className="mx-auto w-full max-w-7xl scroll-mt-24 px-4 py-10 sm:px-6 lg:px-8"
     >
       <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
-        <p className="text-sm font-bold uppercase tracking-[0.18em] text-slate-400">
-          Platform at a Glance
-        </p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-lg font-black text-slate-900 sm:text-xl">Platform at a Glance</h2>
+            <p className="text-xs text-slate-500">Live numbers across UniLink</p>
+          </div>
+        </div>
         <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {activeStats.map((item) => (
             <div

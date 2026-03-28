@@ -34,7 +34,7 @@ const BlogReader = ({ blog, onBack, allBlogs = [], onSwitch }) => {
 
       {/* Hero image */}
       <div className="relative overflow-hidden rounded-2xl bg-slate-100">
-        <div className="aspect-[21/9] w-full">
+        <div className=" w-full">
           {blog.imageUrl ? (
             <img src={blog.imageUrl} alt={blog.title} className="h-full w-full object-cover" />
           ) : (
@@ -46,11 +46,11 @@ const BlogReader = ({ blog, onBack, allBlogs = [], onSwitch }) => {
           )}
         </div>
         {/* Title overlay */}
-        <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent px-5 pb-5 pt-14 sm:px-8 sm:pb-6">
+        {/* <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent px-5 pb-5 pt-14 sm:px-8 sm:pb-6">
           <h1 className="text-xl font-black leading-snug text-white sm:text-2xl lg:text-3xl">
             {blog.title}
           </h1>
-        </div>
+        </div> */}
       </div>
 
       {/* Author row */}

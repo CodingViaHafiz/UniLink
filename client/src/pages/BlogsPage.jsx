@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useLocation } from "react-router-dom";
 import AppLayout from "../components/layout/AppLayout";
 import BlogCard from "../components/blog/BlogCard";
 import BlogReader from "../components/blog/BlogReader";
@@ -19,11 +20,12 @@ const CATEGORIES = [
 
 const BlogsPage = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const [blogs, setBlogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
-  const [viewing, setViewing] = useState(null);
+  const [viewing, setViewing] = useState(location.state?.viewBlog || null);
   const [search, setSearch] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
 
