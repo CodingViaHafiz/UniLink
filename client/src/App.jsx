@@ -15,6 +15,7 @@ import HostelsPage from "./pages/HostelsPage";
 import HomePage from "./pages/HomePage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProfilePage from "./pages/ProfilePage";
+import ProgramsPage from "./pages/ProgramsPage";
 import ResourcesTypePage from "./pages/ResourcesTypePage";
 import AdminLayoutPage from "./pages/admin/AdminLayoutPage";
 import AdminBlogsPage from "./pages/admin/AdminBlogsPage";
@@ -25,6 +26,7 @@ import AdminCalendarPage from "./pages/admin/AdminCalendarPage";
 import AdminFeedbackPage from "./pages/admin/AdminFeedbackPage";
 import AdminLostFoundPage from "./pages/admin/AdminLostFoundPage";
 import AdminMarketplacePage from "./pages/admin/AdminMarketplacePage";
+import AdminProgramsPage from "./pages/admin/AdminProgramsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import SetPasswordPage from "./pages/SetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
@@ -80,6 +82,7 @@ function App() {
           <Route path="/feedback" element={<FeedbackPage />} />
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/lost-found" element={<LostFoundPage />} />
+          <Route path="/programs" element={<ProgramsPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
           <Route element={<RoleRoute allowedRoles={["faculty"]} />}>
@@ -97,6 +100,7 @@ function App() {
               <Route path="feedback" element={<AdminFeedbackPage />} />
               <Route path="marketplace" element={<AdminMarketplacePage />} />
               <Route path="lost-found" element={<AdminLostFoundPage />} />
+              <Route path="programs" element={<AdminProgramsPage />} />
               <Route path="*" element={<Navigate to="/admin-dashboard" replace />} />
             </Route>
           </Route>

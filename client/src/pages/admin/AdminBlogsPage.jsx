@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import MarkdownToolbar from "../../components/blog/MarkdownToolbar";
 import Pagination from "../../components/ui/Pagination";
 import { API_BASE, apiFetch } from "../../lib/api";
 import { MotionPage } from "../../lib/motion";
@@ -15,6 +16,7 @@ const AdminBlogsPage = () => {
   const [form, setForm] = useState({ title: "", content: "", category: "general" });
   const [imageFile, setImageFile] = useState(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const contentRef = useRef(null);
   const [feedback, setFeedback] = useState({ type: "", text: "" });
 
   const loadBlogs = async () => {
@@ -125,15 +127,19 @@ const AdminBlogsPage = () => {
               <option value="campus">Campus Life</option>
             </select>
           </div>
-          <textarea
-            className="h-32 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-            placeholder="Write the blog content"
-            value={form.content}
-            onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
-            minLength={20}
-            required
-            onPaste={handlePaste}
-          />
+          <div>
+            <MarkdownToolbar textareaRef={contentRef} value={form.content} onChange={(val) => setForm((prev) => ({ ...prev, content: val }))} />
+            <textarea
+              ref={contentRef}
+              className="h-40 w-full rounded-b-xl border border-slate-300 px-3 py-2 text-sm font-mono"
+              placeholder="Write blog content using Markdown..."
+              value={form.content}
+              onChange={(event) => setForm((prev) => ({ ...prev, content: event.target.value }))}
+              minLength={20}
+              required
+              onPaste={handlePaste}
+            />
+          </div>
           <input
             type="file"
             accept="image/jpeg,image/png,image/webp"

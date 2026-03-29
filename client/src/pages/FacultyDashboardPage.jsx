@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import MarkdownToolbar from "../components/blog/MarkdownToolbar";
 import ResourceUpload from "../components/resources/ResourceUpload";
 import { useAuth } from "../hooks/useAuth";
 import { API_BASE, apiFetch } from "../lib/api";
@@ -68,6 +69,7 @@ const FacultyDashboardPage = () => {
   const [blogEditing, setBlogEditing] = useState(null);
   const [blogForm, setBlogForm] = useState({ title: "", content: "", category: "general" });
   const [blogImage, setBlogImage] = useState(null);
+  const blogContentRef = useRef(null);
   const [isPublishing, setIsPublishing] = useState(false);
   const [feedback, setFeedback] = useState({ type: "", text: "" });
 
@@ -467,14 +469,18 @@ const FacultyDashboardPage = () => {
                       <option value="campus">Campus Life</option>
                     </select>
                   </div>
-                  <textarea
-                    className="h-36 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none ring-blue-200 focus:ring-2"
-                    placeholder="Share your blog content..."
-                    value={blogForm.content}
-                    onChange={(e) => setBlogForm((p) => ({ ...p, content: e.target.value }))}
-                    minLength={20}
-                    required
-                  />
+                  <div>
+                    <MarkdownToolbar textareaRef={blogContentRef} value={blogForm.content} onChange={(val) => setBlogForm((p) => ({ ...p, content: val }))} />
+                    <textarea
+                      ref={blogContentRef}
+                      className="h-40 w-full rounded-b-xl border border-slate-300 px-3 py-2.5 text-sm font-mono outline-none ring-blue-200 focus:ring-2"
+                      placeholder="Write blog content using Markdown..."
+                      value={blogForm.content}
+                      onChange={(e) => setBlogForm((p) => ({ ...p, content: e.target.value }))}
+                      minLength={20}
+                      required
+                    />
+                  </div>
                   <input
                     type="file"
                     accept="image/jpeg,image/png,image/webp"

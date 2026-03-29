@@ -2,6 +2,7 @@
  * BlogReader — full article view that renders INSIDE AppLayout's content area.
  * Not a modal/portal — just a regular component.
  */
+import Markdown from "react-markdown";
 
 const CATEGORY_LABEL = {
   announcement: "Announcement",
@@ -33,25 +34,22 @@ const BlogReader = ({ blog, onBack, allBlogs = [], onSwitch }) => {
       </button>
 
       {/* Hero image */}
-      <div className="relative overflow-hidden rounded-2xl bg-slate-100">
-        <div className=" w-full">
-          {blog.imageUrl ? (
-            <img src={blog.imageUrl} alt={blog.title} className="h-full w-full object-cover" />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center bg-linear-to-br from-slate-800 via-blue-900 to-cyan-800">
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white/20 sm:h-16 sm:w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
-              </svg>
-            </div>
-          )}
+      {blog.imageUrl ? (
+        <div className="overflow-hidden rounded-2xl bg-slate-100">
+          <img src={blog.imageUrl} alt={blog.title} className="w-full rounded-2xl object-contain" />
         </div>
-        {/* Title overlay */}
-        {/* <div className="absolute inset-x-0 bottom-0 bg-linear-to-t from-black/80 via-black/40 to-transparent px-5 pb-5 pt-14 sm:px-8 sm:pb-6">
-          <h1 className="text-xl font-black leading-snug text-white sm:text-2xl lg:text-3xl">
-            {blog.title}
-          </h1>
-        </div> */}
-      </div>
+      ) : (
+        <div className="flex h-36 w-full items-center justify-center rounded-2xl bg-linear-to-br from-slate-800 via-blue-900 to-cyan-800 sm:h-48">
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" />
+          </svg>
+        </div>
+      )}
+
+      {/* Blog title */}
+      <h1 className="mt-5 text-2xl font-black leading-snug tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
+        {blog.title}
+      </h1>
 
       {/* Author row */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 py-4">
@@ -75,10 +73,8 @@ const BlogReader = ({ blog, onBack, allBlogs = [], onSwitch }) => {
       {/* Content + Sidebar */}
       <div className="flex flex-col gap-8 pt-6 lg:flex-row">
         {/* Article */}
-        <article className="min-w-0 flex-1">
-          <div className="whitespace-pre-wrap text-sm leading-7 text-slate-700 sm:text-base sm:leading-8">
-            {blog.content}
-          </div>
+        <article className="min-w-0 flex-1 prose prose-slate prose-sm sm:prose-base max-w-none prose-headings:font-black prose-h1:text-2xl prose-h1:text-emerald-800 prose-h2:text-xl prose-h2:text-blue-800 prose-h3:text-lg prose-h3:text-violet-700 prose-p:leading-7 prose-p:text-slate-600 prose-strong:text-slate-800 prose-li:text-slate-600 prose-a:text-sky-600 prose-a:no-underline hover:prose-a:underline prose-blockquote:border-emerald-300 prose-blockquote:text-slate-500">
+          <Markdown>{blog.content}</Markdown>
         </article>
 
         {/* Popular Posts */}

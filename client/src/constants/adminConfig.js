@@ -14,6 +14,7 @@ export const adminSidebarSections = [
       { label: "Blogs", to: "/admin-dashboard/blogs" },
       { label: "Hostels", to: "/admin-dashboard/hostels" },
       { label: "Calendar", to: "/admin-dashboard/calendar" },
+      { label: "Programs", to: "/admin-dashboard/programs" },
     ],
   },
   {

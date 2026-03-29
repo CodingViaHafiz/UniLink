@@ -13,7 +13,7 @@ const CATEGORIES = [
   { key: "general", label: "General", emoji: "💬", color: "bg-sky-600", light: "bg-sky-50 text-sky-600 border-sky-200" },
 ];
 
-const EMOJI_REACTIONS = ["😂", "👏", "🔥", "💯", "😭", "🤝", "❤️", "🙌"];
+// const EMOJI_REACTIONS = ["😂", "👏", "🔥", "💯", "😭", "🤝", "❤️", "🙌"];
 
 const MIN_CHARS = 10;
 const MAX_CHARS = 1000;
@@ -113,7 +113,7 @@ const FeedbackPage = () => {
               {voices.map((v, i) => {
                 const catConfig = CATEGORIES.find((c) => c.key === v.category) || CATEGORIES[3];
                 const date = new Date(v.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" });
-                const randomEmoji = EMOJI_REACTIONS[i % EMOJI_REACTIONS.length];
+                // const randomEmoji = EMOJI_REACTIONS[i % EMOJI_REACTIONS.length];
                 return (
                   <motion.div
                     key={v.id}
@@ -138,7 +138,7 @@ const FeedbackPage = () => {
                         </div>
                         <span className="text-[10px] font-semibold text-slate-400">Anonymous</span>
                       </div>
-                      <span className="text-sm" title="vibe">{randomEmoji}</span>
+                      {/* <span className="text-sm" title="vibe">{randomEmoji}</span> */}
                     </div>
                   </motion.div>
                 );
