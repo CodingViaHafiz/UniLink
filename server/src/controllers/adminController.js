@@ -1,6 +1,7 @@
 import Blog from "../models/Blog.js";
-import User from "../models/User.js";
+import Program from "../models/Program.js";
 import Resource from "../models/Resource.js";
+import User from "../models/User.js";
 const monthFormatter = new Intl.DateTimeFormat("en-US", { month: "short" });
 
 const buildMonthBuckets = (monthsBack = 6) => {
@@ -143,6 +144,109 @@ export const getRecentAdminActivity = async (_req, res) => {
       message: "Failed to load recent admin activity.",
       error: error.message,
     });
+  }
+};
+
+// ─── Semester management ──────────────────────────────────────────────────────
+
+// GET /api/admin/semester/preview?programmeCode=BCS&batch=FA21
+// Returns list of students that will be affected — let admin confirm before executing.
+export const previewSemesterPromotion = async (req, res) => {
+  try {
+    const { programmeCode, batch } = req.query;
+    if (!programmeCode?.trim() || !batch?.trim()) {
+      return res.status(400).json({ message: "programmeCode and batch are required." });
+    }
+
+    const students = await User.find({
+      role: "student",
+      program: { $regex: new RegExp(`^${programmeCode.trim()}$`, "i") },
+      batch:   { $regex: new RegExp(`^${batch.trim()}$`, "i") },
+    })
+      .select("fullName enrollmentNumber currentSemester")
+      .sort({ fullName: 1 })
+      .lean();
+
+    return res.status(200).json({
+      students: students.map((s) => ({
+        id:               s._id,
+        fullName:         s.fullName,
+        enrollmentNumber: s.enrollmentNumber,
+        currentSemester:  s.currentSemester ?? null,
+      })),
+      count: students.length,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Preview failed.", error: error.message });
+  }
+};
+
+// PATCH /api/admin/semester/promote
+// action "set"       → set every matching student to { semester }
+// action "increment" → bump every student who already has a semester assigned (+1)
+export const promoteSemester = async (req, res) => {
+  try {
+    const { programmeCode, batch, action, semester } = req.body;
+
+    if (!programmeCode?.trim() || !batch?.trim()) {
+      return res.status(400).json({ message: "programmeCode and batch are required." });
+    }
+    if (!["set", "increment"].includes(action)) {
+      return res.status(400).json({ message: "action must be 'set' or 'increment'." });
+    }
+    if (action === "set") {
+      const sem = Number(semester);
+      if (!Number.isInteger(sem) || sem < 1 || sem > 12) {
+        return res.status(400).json({ message: "semester must be an integer between 1 and 12." });
+      }
+    }
+
+    const baseFilter = {
+      role:    "student",
+      program: { $regex: new RegExp(`^${programmeCode.trim()}$`, "i") },
+      batch:   { $regex: new RegExp(`^${batch.trim()}$`, "i") },
+    };
+
+    let result;
+
+    if (action === "set") {
+      result = await User.updateMany(baseFilter, { $set: { currentSemester: Number(semester) } });
+    } else {
+      // Only promote students who already have a semester value; skip uninitialized (null) ones
+      const filter = { ...baseFilter, currentSemester: { $ne: null, $gte: 1 } };
+      // Aggregation pipeline update handles the increment safely
+      result = await User.updateMany(filter, [
+        { $set: { currentSemester: { $add: ["$currentSemester", 1] } } },
+      ]);
+    }
+
+    return res.status(200).json({
+      message: `${result.modifiedCount} student(s) updated successfully.`,
+      modifiedCount: result.modifiedCount,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Promotion failed.", error: error.message });
+  }
+};
+
+// GET /api/admin/programmes  (lightweight list for admin dropdowns)
+export const getProgrammeList = async (_req, res) => {
+  try {
+    const programmes = await Program.find()
+      .select("name code totalSemesters")
+      .sort({ code: 1 })
+      .lean();
+
+    return res.status(200).json({
+      programmes: programmes.map((p) => ({
+        id:             p._id,
+        name:           p.name,
+        code:           p.code,
+        totalSemesters: p.totalSemesters,
+      })),
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to fetch programmes.", error: error.message });
   }
 };
 

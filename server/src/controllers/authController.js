@@ -27,6 +27,7 @@ const sanitizeUser = (user) => ({
   program: user.program,
   batch: user.batch,
   enrollmentNumber: user.enrollmentNumber,
+  currentSemester: user.currentSemester ?? null,
   isActive: user.isActive,
   isPasswordSet: user.isPasswordSet,
   isVerified: user.isVerified,

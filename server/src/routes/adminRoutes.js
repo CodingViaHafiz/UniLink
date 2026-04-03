@@ -3,8 +3,11 @@ import {
   getAdminActivity,
   getAdminStats,
   getModulePlaceholderData,
+  getProgrammeList,
   getRecentAdminActivity,
   prepareUploadStructure,
+  previewSemesterPromotion,
+  promoteSemester,
 } from "../controllers/adminController.js";
 import {
   addEnrollmentNumber,
@@ -23,6 +26,11 @@ router.get("/activity", getAdminActivity);
 router.get("/recent-activity", getRecentAdminActivity);
 router.get("/placeholders/:moduleKey", getModulePlaceholderData);
 router.post("/uploads/:resourceType", prepareUploadStructure);
+
+// Semester management
+router.get("/semester/preview", previewSemesterPromotion);
+router.patch("/semester/promote", promoteSemester);
+router.get("/programmes", getProgrammeList);
 
 // Enrollment number management
 router.get("/enrollment-numbers", getEnrollmentNumbers);

@@ -66,6 +66,14 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // Admin-controlled semester tracking (students only)
+    currentSemester: {
+      type: Number,
+      default: null,
+      min: 1,
+      max: 12,
+    },
+
     // Faculty "Set Your Password" flow
     isPasswordSet: {
       type: Boolean,

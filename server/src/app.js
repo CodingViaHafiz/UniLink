@@ -8,6 +8,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
 import calendarRoutes from "./routes/calendarRoutes.js";
+import classMessageRoutes from "./routes/classMessageRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import feedRoutes from "./routes/feedRoutes.js";
 import hostelRoutes from "./routes/hostelRoutes.js";
@@ -45,6 +46,7 @@ app.use("/api/feedback", feedbackRoutes);
 app.use("/api/marketplace", marketRoutes);
 app.use("/api/lost-found", lostFoundRoutes);
 app.use("/api/programs", programRoutes);
+app.use("/api/class-messages", classMessageRoutes);
 
 app.use((err, _req, res, _next) => {
   if (err instanceof multer.MulterError) {

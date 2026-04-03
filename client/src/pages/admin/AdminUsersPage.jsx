@@ -34,7 +34,7 @@ const emptyStaffForm = { fullName: "", email: "", role: "faculty", department: "
 const emptyEnrolForm = { enrollmentNumber: "", department: "", program: "", batch: "" };
 
 // ─── Sub-section tab ──────────────────────────────────────────────────────────
-const TABS = { STAFF: "staff", ENROLLMENT: "enrollment" };
+const TABS = { STAFF: "staff", ENROLLMENT: "enrollment", SEMESTER: "semester" };
 
 const AdminUsersPage = () => {
   const [activeTab, setActiveTab] = useState(TABS.STAFF);
@@ -49,6 +49,14 @@ const AdminUsersPage = () => {
   // ── Staff form state ─────────────────────────────────────────────────────────
   const [staffForm, setStaffForm] = useState(emptyStaffForm);
   const [isCreatingStaff, setIsCreatingStaff] = useState(false);
+
+  // ── Semester promotion state ──────────────────────────────────────────────────
+  const [programmes, setProgrammes]           = useState([]);
+  const [semForm, setSemForm]                 = useState({ programmeCode: "", batch: "", action: "set", semester: "1" });
+  const [previewStudents, setPreviewStudents] = useState(null);  // null = not yet previewed
+  const [isPreviewing, setIsPreviewing]       = useState(false);
+  const [isPromoting, setIsPromoting]         = useState(false);
+  const [promoteResult, setPromoteResult]     = useState(null);  // { count, action }
 
   // ── Enrollment state ─────────────────────────────────────────────────────────
   const [enrolRecords, setEnrolRecords] = useState([]);
@@ -91,6 +99,14 @@ const AdminUsersPage = () => {
   useEffect(() => {
     if (activeTab === TABS.ENROLLMENT) loadEnrolRecords();
   }, [activeTab, enrolFilter]);
+
+  // ── Load programmes (for semester tab) ───────────────────────────────────────
+  useEffect(() => {
+    if (activeTab !== TABS.SEMESTER || programmes.length > 0) return;
+    apiFetch("/admin/programmes", { method: "GET" })
+      .then((data) => setProgrammes(data.programmes || []))
+      .catch((err) => notifyError(err.message));
+  }, [activeTab, programmes.length]);
 
   // ── Create staff ─────────────────────────────────────────────────────────────
   const handleCreateStaff = async (e) => {
@@ -141,6 +157,43 @@ const AdminUsersPage = () => {
       const data = await apiFetch(`/auth/staff/${id}/resend-setup`, { method: "POST" });
       notifySuccess(data.message);
     } catch (err) { notifyError(err.message); }
+  };
+
+  // ── Semester: preview ────────────────────────────────────────────────────────
+  const handleSemesterPreview = async (e) => {
+    e.preventDefault();
+    setPreviewStudents(null);
+    setPromoteResult(null);
+    setIsPreviewing(true);
+    try {
+      const data = await apiFetch(
+        `/admin/semester/preview?programmeCode=${encodeURIComponent(semForm.programmeCode)}&batch=${encodeURIComponent(semForm.batch)}`,
+        { method: "GET" }
+      );
+      setPreviewStudents(data.students || []);
+    } catch (err) {
+      notifyError(err.message);
+    } finally {
+      setIsPreviewing(false);
+    }
+  };
+
+  // ── Semester: execute promotion ───────────────────────────────────────────────
+  const handleSemesterPromote = async () => {
+    if (!window.confirm(`This will update ${previewStudents.length} student(s). Proceed?`)) return;
+    setIsPromoting(true);
+    try {
+      const body = { programmeCode: semForm.programmeCode, batch: semForm.batch, action: semForm.action };
+      if (semForm.action === "set") body.semester = semForm.semester;
+      const data = await apiFetch("/admin/semester/promote", { method: "PATCH", body: JSON.stringify(body) });
+      notifySuccess(data.message);
+      setPromoteResult({ count: data.modifiedCount, action: semForm.action, semester: semForm.semester });
+      setPreviewStudents(null);
+    } catch (err) {
+      notifyError(err.message);
+    } finally {
+      setIsPromoting(false);
+    }
   };
 
   // ── Add enrollment number ────────────────────────────────────────────────────
@@ -197,6 +250,7 @@ const AdminUsersPage = () => {
         {[
           { key: TABS.STAFF,      label: "Staff Accounts" },
           { key: TABS.ENROLLMENT, label: "Enrollment Numbers" },
+          { key: TABS.SEMESTER,   label: "Semester Promotion" },
         ].map(({ key, label }) => (
           <button
             key={key}
@@ -540,6 +594,206 @@ const AdminUsersPage = () => {
           </section>
         </>
       )}
+      {/* ══════════════════════════════════════════════════════════════════════
+          TAB 3 — Semester Promotion
+      ══════════════════════════════════════════════════════════════════════ */}
+      {activeTab === TABS.SEMESTER && (
+        <div className="space-y-6">
+
+          {/* ── Promotion form ── */}
+          <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+            <h1 className="text-2xl font-black tracking-tight text-slate-900">Semester Promotion</h1>
+            <p className="mt-1 text-sm text-slate-500">
+              Bulk-update the current semester for an entire batch after exams. Preview affected students before applying.
+            </p>
+
+            <form className="mt-6 space-y-5" onSubmit={handleSemesterPreview}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Programme */}
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Programme</span>
+                  <select
+                    required
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-medium outline-none ring-blue-200 focus:ring-2"
+                    value={semForm.programmeCode}
+                    onChange={(e) => { setSemForm((p) => ({ ...p, programmeCode: e.target.value })); setPreviewStudents(null); setPromoteResult(null); }}
+                  >
+                    <option value="">Select programme…</option>
+                    {programmes.map((p) => (
+                      <option key={p.id} value={p.code}>{p.code} — {p.name}</option>
+                    ))}
+                  </select>
+                </label>
+
+                {/* Batch */}
+                <label className="block">
+                  <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Batch</span>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. FA21"
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm uppercase outline-none ring-blue-200 focus:ring-2"
+                    value={semForm.batch}
+                    onChange={(e) => { setSemForm((p) => ({ ...p, batch: e.target.value })); setPreviewStudents(null); setPromoteResult(null); }}
+                  />
+                </label>
+              </div>
+
+              {/* Action */}
+              <div>
+                <span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Action</span>
+                <div className="flex flex-wrap gap-3">
+                  {[
+                    { value: "set",       label: "Set to specific semester",  desc: "Assign a fixed semester — use for new batches or corrections." },
+                    { value: "increment", label: "Promote (+1 semester)",      desc: "Bump everyone up one semester after exams. Only applies to students with a semester already assigned." },
+                  ].map(({ value, label, desc }) => (
+                    <label
+                      key={value}
+                      className={`flex flex-1 cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-colors ${
+                        semForm.action === value
+                          ? "border-blue-500 bg-blue-50"
+                          : "border-slate-200 hover:border-slate-300"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="action"
+                        value={value}
+                        checked={semForm.action === value}
+                        onChange={() => { setSemForm((p) => ({ ...p, action: value })); setPreviewStudents(null); setPromoteResult(null); }}
+                        className="mt-0.5 accent-blue-600"
+                      />
+                      <div>
+                        <p className={`text-sm font-bold ${semForm.action === value ? "text-blue-700" : "text-slate-700"}`}>{label}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{desc}</p>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Target semester (only for "set") */}
+              {semForm.action === "set" && (
+                <label className="block max-w-xs">
+                  <span className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">Target Semester</span>
+                  <input
+                    type="number"
+                    min={1}
+                    max={12}
+                    required
+                    className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none ring-blue-200 focus:ring-2"
+                    value={semForm.semester}
+                    onChange={(e) => setSemForm((p) => ({ ...p, semester: e.target.value }))}
+                  />
+                </label>
+              )}
+
+              <button
+                type="submit"
+                disabled={isPreviewing || !semForm.programmeCode || !semForm.batch}
+                className="inline-flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 px-5 py-2.5 text-sm font-bold text-blue-700 transition-colors hover:bg-blue-100 disabled:opacity-50"
+              >
+                {isPreviewing ? (
+                  <><div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-300 border-t-blue-700" /> Fetching preview…</>
+                ) : (
+                  <><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg> Preview Affected Students</>
+                )}
+              </button>
+            </form>
+          </section>
+
+          {/* ── Preview results ── */}
+          {previewStudents !== null && (
+            <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h2 className="text-xl font-black text-slate-900">
+                    {previewStudents.length === 0 ? "No students found" : `${previewStudents.length} student(s) will be updated`}
+                  </h2>
+                  {previewStudents.length > 0 && (
+                    <p className="mt-0.5 text-sm text-slate-500">
+                      {semForm.action === "set"
+                        ? `All will be set to Semester ${semForm.semester}.`
+                        : "All with an assigned semester will be promoted by +1."}
+                    </p>
+                  )}
+                </div>
+                {previewStudents.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleSemesterPromote}
+                    disabled={isPromoting}
+                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition-colors hover:bg-blue-700 disabled:opacity-60"
+                  >
+                    {isPromoting ? (
+                      <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> Applying…</>
+                    ) : (
+                      <><svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg> Apply Promotion</>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {previewStudents.length > 0 && (
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full min-w-120 border-collapse">
+                    <thead>
+                      <tr>
+                        {["Student", "Enrollment #", "Current Semester", "After Promotion"].map((h) => (
+                          <th key={h} className="border-b border-slate-200 px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-slate-400">{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {previewStudents.map((s) => {
+                        const after = semForm.action === "set"
+                          ? Number(semForm.semester)
+                          : s.currentSemester != null ? s.currentSemester + 1 : "—";
+                        return (
+                          <tr key={s.id} className="border-b border-slate-100 text-sm">
+                            <td className="px-3 py-2.5 font-semibold text-slate-900">{s.fullName}</td>
+                            <td className="px-3 py-2.5 font-mono text-slate-500">{s.enrollmentNumber || "—"}</td>
+                            <td className="px-3 py-2.5">
+                              {s.currentSemester != null
+                                ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">Semester {s.currentSemester}</span>
+                                : <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">Not set</span>}
+                            </td>
+                            <td className="px-3 py-2.5">
+                              {after !== "—"
+                                ? <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">Semester {after}</span>
+                                : <span className="text-xs text-slate-400">Skipped (no semester)</span>}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* ── Success result ── */}
+          {promoteResult && (
+            <div className="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4">
+              <svg xmlns="http://www.w3.org/2000/svg" className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <div>
+                <p className="text-sm font-bold text-emerald-800">
+                  {promoteResult.count} student(s) updated successfully.
+                </p>
+                <p className="mt-0.5 text-xs text-emerald-700">
+                  {promoteResult.action === "set"
+                    ? `All set to Semester ${promoteResult.semester}.`
+                    : "All eligible students promoted by +1 semester."}
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
     </MotionPage>
   );
 };

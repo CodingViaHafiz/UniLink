@@ -50,7 +50,9 @@ export const getPinnedPosts = async (_req, res) => {
       })),
     });
   } catch (error) {
-    return res.status(500).json({ message: "Failed to fetch notices.", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch notices.", error: error.message });
   }
 };
 
@@ -142,7 +144,7 @@ export const deletePost = async (req, res) => {
         .status(403)
         .json({ message: "Not authorized to delete this post." });
     }
-    if (isFaculty && post.role === "adminn") {
+    if (isFaculty && post.role === "admin") {
       return res
         .status(403)
         .json({ message: "Faculty cannot delete admin posts." });

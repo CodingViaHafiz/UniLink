@@ -28,6 +28,7 @@ import AdminLostFoundPage from "./pages/admin/AdminLostFoundPage";
 import AdminMarketplacePage from "./pages/admin/AdminMarketplacePage";
 import AdminProgramsPage from "./pages/admin/AdminProgramsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import ClassMessagesPage from "./pages/ClassMessagesPage";
 import SetPasswordPage from "./pages/SetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -83,6 +84,7 @@ function App() {
           <Route path="/marketplace" element={<MarketplacePage />} />
           <Route path="/lost-found" element={<LostFoundPage />} />
           <Route path="/programs" element={<ProgramsPage />} />
+          <Route path="/class-messages" element={<ClassMessagesPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
           <Route element={<RoleRoute allowedRoles={["faculty"]} />}>

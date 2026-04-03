@@ -1,8 +1,11 @@
+import cookie from "cookie";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
+import User from "./models/User.js";
+import { verifyToken } from "./utils/token.js";
 
 dotenv.config();
 
@@ -21,12 +24,42 @@ const startServer = async () => {
       },
     });
 
+    // Authenticate every socket connection using the same httpOnly cookie
+    io.use(async (socket, next) => {
+      try {
+        const cookies = cookie.parse(socket.handshake.headers.cookie || "");
+        const token = cookies.token;
+        if (!token) return next(new Error("Unauthorized"));
+
+        const decoded = verifyToken(token);
+        const user = await User.findById(decoded.id).select("-password");
+        if (!user || !user.isActive) return next(new Error("Unauthorized"));
+
+        socket.user = user;
+        next();
+      } catch {
+        next(new Error("Unauthorized"));
+      }
+    });
+
     // Make io accessible in controllers via req.app.get("io")
     app.set("io", io);
 
-    // Track online users
+    // Track online users + manage programme rooms
     io.on("connection", (socket) => {
       io.emit("online-count", io.engine.clientsCount);
+
+      // Client requests to receive messages for a specific programme
+      socket.on("join-programme-room", ({ programmeId }) => {
+        if (!programmeId) return;
+        socket.join(`programme:${programmeId}`);
+      });
+
+      // Client leaves a programme room (e.g. navigating away or switching programme)
+      socket.on("leave-programme-room", ({ programmeId }) => {
+        if (!programmeId) return;
+        socket.leave(`programme:${programmeId}`);
+      });
 
       socket.on("disconnect", () => {
         io.emit("online-count", io.engine.clientsCount);
