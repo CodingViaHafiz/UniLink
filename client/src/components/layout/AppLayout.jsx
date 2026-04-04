@@ -25,6 +25,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import uniLinkLogo from "../../assets/unilink-logo-campus.svg";
+import UserAvatar from "../common/UserAvatar";
 import { useTheme } from "../../context/ThemeProvider";
 
 /* ─────────────────────────────────────────
@@ -337,9 +338,7 @@ const AppLayout = ({
             onClick={() => setSidebarOpen(false)}
             className="flex items-center gap-2.5 rounded-xl px-2 py-2 transition-colors hover:bg-slate-50"
           >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-black text-sky-700">
-              {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
-            </div>
+            <UserAvatar user={user} className="h-7 w-7 rounded-full" textSize="text-xs" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-xs font-bold text-slate-800">{user?.fullName || "User"}</p>
               <p className="truncate text-[10px] capitalize text-slate-400">{user?.role}</p>

@@ -22,7 +22,7 @@ const DEPARTMENTS = [
 ];
 
 const roleBadge = {
-  admin:   "bg-purple-100 text-purple-700",
+  admin: "bg-purple-100 text-purple-700",
   faculty: "bg-blue-100 text-blue-700",
   student: "bg-slate-100 text-slate-600",
 };
@@ -51,12 +51,12 @@ const AdminUsersPage = () => {
   const [isCreatingStaff, setIsCreatingStaff] = useState(false);
 
   // ── Semester promotion state ──────────────────────────────────────────────────
-  const [programmes, setProgrammes]           = useState([]);
-  const [semForm, setSemForm]                 = useState({ programmeCode: "", batch: "", action: "set", semester: "1" });
+  const [programmes, setProgrammes] = useState([]);
+  const [semForm, setSemForm] = useState({ programmeCode: "", batch: "", action: "set", semester: "1" });
   const [previewStudents, setPreviewStudents] = useState(null);  // null = not yet previewed
-  const [isPreviewing, setIsPreviewing]       = useState(false);
-  const [isPromoting, setIsPromoting]         = useState(false);
-  const [promoteResult, setPromoteResult]     = useState(null);  // { count, action }
+  const [isPreviewing, setIsPreviewing] = useState(false);
+  const [isPromoting, setIsPromoting] = useState(false);
+  const [promoteResult, setPromoteResult] = useState(null);  // { count, action }
 
   // ── Enrollment state ─────────────────────────────────────────────────────────
   const [enrolRecords, setEnrolRecords] = useState([]);
@@ -248,19 +248,18 @@ const AdminUsersPage = () => {
       {/* ── Tab switcher ── */}
       <div className="flex gap-2 border-b border-slate-200 pb-1">
         {[
-          { key: TABS.STAFF,      label: "Staff Accounts" },
+          { key: TABS.STAFF, label: "Staff Accounts" },
           { key: TABS.ENROLLMENT, label: "Enrollment Numbers" },
-          { key: TABS.SEMESTER,   label: "Semester Promotion" },
+          { key: TABS.SEMESTER, label: "Semester Promotion" },
         ].map(({ key, label }) => (
           <button
             key={key}
             type="button"
             onClick={() => setActiveTab(key)}
-            className={`rounded-t-lg px-4 py-2 text-sm font-bold transition-colors ${
-              activeTab === key
-                ? "border-b-2 border-blue-600 text-blue-700"
-                : "text-slate-500 hover:text-slate-700"
-            }`}
+            className={`rounded-t-lg px-4 py-2 text-sm font-bold transition-colors ${activeTab === key
+              ? "border-b-2 border-blue-600 text-blue-700"
+              : "text-slate-500 hover:text-slate-700"
+              }`}
           >
             {label}
           </button>
@@ -369,8 +368,8 @@ const AdminUsersPage = () => {
                   {isCreatingStaff
                     ? "Creating…"
                     : staffForm.role === "faculty"
-                    ? "Create & Send Setup Email"
-                    : "Create Admin Account"}
+                      ? "Create & Send Setup Email"
+                      : "Create Admin Account"}
                 </button>
               </div>
             </form>
@@ -415,6 +414,7 @@ const AdminUsersPage = () => {
                       {paginatedUsers.map((user) => (
                         <tr key={user.id} className="border-b border-slate-100 text-sm">
                           <td className="px-3 py-3">
+                            <span className="font-semibold text-slate-900">{user.image}</span>
                             <span className="font-semibold text-slate-900">{user.fullName}</span>
                             {user.role === "faculty" && !user.isPasswordSet && (
                               <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">
@@ -493,9 +493,9 @@ const AdminUsersPage = () => {
             <form className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" onSubmit={handleAddEnrol}>
               {[
                 { key: "enrollmentNumber", label: "Enrollment Number", placeholder: "FA21-BCS-001" },
-                { key: "department",       label: "Department",        placeholder: "Computer Science" },
-                { key: "program",          label: "Program",           placeholder: "BCS" },
-                { key: "batch",            label: "Batch",             placeholder: "FA21" },
+                { key: "department", label: "Department", placeholder: "Computer Science" },
+                { key: "program", label: "Program", placeholder: "BCS" },
+                { key: "batch", label: "Batch", placeholder: "FA21" },
               ].map(({ key, label, placeholder }) => (
                 <label key={key} className="block">
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">{label}</span>
@@ -644,16 +644,15 @@ const AdminUsersPage = () => {
                 <span className="mb-2 block text-xs font-bold uppercase tracking-wide text-slate-500">Action</span>
                 <div className="flex flex-wrap gap-3">
                   {[
-                    { value: "set",       label: "Set to specific semester",  desc: "Assign a fixed semester — use for new batches or corrections." },
-                    { value: "increment", label: "Promote (+1 semester)",      desc: "Bump everyone up one semester after exams. Only applies to students with a semester already assigned." },
+                    { value: "set", label: "Set to specific semester", desc: "Assign a fixed semester — use for new batches or corrections." },
+                    { value: "increment", label: "Promote (+1 semester)", desc: "Bump everyone up one semester after exams. Only applies to students with a semester already assigned." },
                   ].map(({ value, label, desc }) => (
                     <label
                       key={value}
-                      className={`flex flex-1 cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-colors ${
-                        semForm.action === value
-                          ? "border-blue-500 bg-blue-50"
-                          : "border-slate-200 hover:border-slate-300"
-                      }`}
+                      className={`flex flex-1 cursor-pointer items-start gap-3 rounded-xl border-2 p-4 transition-colors ${semForm.action === value
+                        ? "border-blue-500 bg-blue-50"
+                        : "border-slate-200 hover:border-slate-300"
+                        }`}
                     >
                       <input
                         type="radio"

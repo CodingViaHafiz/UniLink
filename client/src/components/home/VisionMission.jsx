@@ -49,7 +49,8 @@ const coreValues = [
 
 const VisionMission = () => (
   <MotionSection className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
-    <div className="relative overflow-hidden rounded-3xl bg-white border-slate-200 shadow-sm px-6 py-10 sm:px-10 sm:py-14">
+    {/* Fix: added `border` class so border-slate-200 actually renders */}
+    <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm px-6 py-10 sm:px-10 sm:py-14">
 
       {/* Decorative pattern — top right */}
       <div className="absolute right-6 top-6 hidden sm:block">
@@ -75,14 +76,13 @@ const VisionMission = () => (
         </div>
       </MotionCard>
 
-      {/* Vision + Mission cards — staggered vertically for visual interest */}
+      {/* Vision + Mission cards — staggered for visual interest */}
       <MotionStagger className="grid gap-5 sm:grid-cols-2 sm:items-start">
-        {/* Vision — pushed down slightly */}
+        {/* Vision */}
         <motion.div
           variants={staggerChild}
-          className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm sm:mt-6 sm:p-8 "
+          className="relative rounded-2xl border border-slate-200 bg-slate-50 p-6 shadow-sm sm:mt-6 sm:p-8"
         >
-          {/* Decorative quote mark */}
           <span className="absolute -top-4 left-5 text-5xl font-black leading-none text-slate-200">"</span>
           <div className="relative">
             <h3 className="mb-3 flex items-center gap-2 text-lg font-black text-slate-900">
@@ -101,12 +101,11 @@ const VisionMission = () => (
           </div>
         </motion.div>
 
-        {/* Mission — sits higher, creates stagger effect */}
+        {/* Mission */}
         <motion.div
           variants={staggerChild}
           className="relative overflow-hidden rounded-2xl bg-blue-600 p-6 text-white shadow-lg shadow-blue-600/20 sm:-mt-2 sm:p-8"
         >
-          {/* Decorative circle */}
           <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/10" />
           <div className="absolute -bottom-4 -left-4 h-16 w-16 rounded-full bg-white/5" />
           <div className="relative">

@@ -29,6 +29,8 @@ import AdminMarketplacePage from "./pages/admin/AdminMarketplacePage";
 import AdminProgramsPage from "./pages/admin/AdminProgramsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import ClassMessagesPage from "./pages/ClassMessagesPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SetPasswordPage from "./pages/SetPasswordPage";
 import VerifyEmailPage from "./pages/VerifyEmailPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
@@ -68,6 +70,8 @@ function App() {
       <Routes>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<AuthPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
         <Route path="/set-password/:token" element={<SetPasswordPage />} />
         <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
 

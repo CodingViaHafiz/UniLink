@@ -10,6 +10,9 @@ const VerifyEmailPage = () => {
   const navigate = useNavigate();
   const [status, setStatus] = useState(STATUS.LOADING);
   const [message, setMessage] = useState("");
+  const [resendEmail, setResendEmail] = useState("");
+  const [resendState, setResendState] = useState("idle"); // idle | sending | sent | error
+  const [resendMessage, setResendMessage] = useState("");
 
   useEffect(() => {
     const verify = async () => {
@@ -25,6 +28,22 @@ const VerifyEmailPage = () => {
 
     if (token) verify();
   }, [token]);
+
+  const handleResend = async (e) => {
+    e.preventDefault();
+    setResendState("sending");
+    try {
+      const data = await apiFetch("/auth/resend-verification", {
+        method: "POST",
+        body: JSON.stringify({ email: resendEmail }),
+      });
+      setResendState("sent");
+      setResendMessage(data.message);
+    } catch (err) {
+      setResendState("error");
+      setResendMessage(err.message || "Failed to resend. Please try again.");
+    }
+  };
 
   return (
     <MotionPage className="flex min-h-screen items-center justify-center bg-slate-100 px-4">
@@ -65,10 +84,37 @@ const VerifyEmailPage = () => {
             </div>
             <h2 className="mt-5 text-lg font-black text-slate-900">Verification Failed</h2>
             <p className="mt-1 text-sm text-slate-500">{message}</p>
+
+            {resendState !== "sent" ? (
+              <form onSubmit={handleResend} className="mt-5 space-y-3 text-left">
+                <p className="text-center text-xs text-slate-400">Need a new link? Enter your email below.</p>
+                <input
+                  type="email"
+                  required
+                  placeholder="your@email.com"
+                  value={resendEmail}
+                  onChange={(e) => setResendEmail(e.target.value)}
+                  className="w-full rounded-xl border border-slate-200 px-4 py-2.5 text-sm focus:border-blue-500 focus:outline-none"
+                />
+                <button
+                  type="submit"
+                  disabled={resendState === "sending"}
+                  className="btn-press w-full rounded-xl bg-sky-500 py-2.5 text-sm font-bold text-white hover:bg-sky-600 disabled:opacity-60"
+                >
+                  {resendState === "sending" ? "Sending..." : "Resend Verification Email"}
+                </button>
+                {resendState === "error" && (
+                  <p className="text-center text-xs text-rose-500">{resendMessage}</p>
+                )}
+              </form>
+            ) : (
+              <p className="mt-4 text-sm font-medium text-emerald-600">{resendMessage}</p>
+            )}
+
             <button
               type="button"
               onClick={() => navigate("/login", { replace: true })}
-              className="btn-press mt-5 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700"
+              className="btn-press mt-3 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white hover:bg-blue-700"
             >
               Go to Login
             </button>

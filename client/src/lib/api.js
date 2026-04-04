@@ -23,3 +23,6 @@ export const apiFetch = async (path, options = {}) => {
 };
 
 export { API_BASE };
+
+// Base URL of the server (without /api) — used to resolve uploaded file paths
+export const SERVER_URL = API_BASE.replace(/\/api$/, "");

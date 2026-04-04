@@ -1,8 +1,10 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
+import fs from "fs";
+import path from "path";
 import EnrollmentNumber from "../models/EnrollmentNumber.js";
 import User from "../models/User.js";
-import { sendPasswordSetupEmail, sendVerificationEmail } from "../services/emailService.js";
+import { sendPasswordResetEmail, sendPasswordSetupEmail, sendVerificationEmail } from "../services/emailService.js";
 import { clearAuthCookie, setAuthCookie, signToken } from "../utils/token.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -31,10 +33,15 @@ const sanitizeUser = (user) => ({
   isActive: user.isActive,
   isPasswordSet: user.isPasswordSet,
   isVerified: user.isVerified,
+  profileImage: user.profileImage || null,
   createdAt: user.createdAt,
 });
 
-const generateSetupToken = () => crypto.randomBytes(32).toString("hex");
+const generateSetupToken = () => {
+  const rawToken = crypto.randomBytes(32).toString("hex");
+  const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+  return { rawToken, hashedToken };
+};
 
 // ─── Public: Validate enrollment number (for live lookup in the register form) ─
 
@@ -99,8 +106,8 @@ export const register = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Generate email verification token
-    const verificationToken = generateSetupToken();
+    // Generate email verification token (store only the hash in DB)
+    const { rawToken: verificationRaw, hashedToken: verificationHashed } = generateSetupToken();
     const verificationExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 h
 
     const user = await User.create({
@@ -114,7 +121,7 @@ export const register = async (req, res) => {
       enrollmentNumber: enrolRecord.enrollmentNumber,
       isPasswordSet: true,
       isVerified: false,
-      verificationToken,
+      verificationToken: verificationHashed,
       verificationTokenExpiry: verificationExpiry,
     });
 
@@ -123,15 +130,21 @@ export const register = async (req, res) => {
     enrolRecord.usedBy = user._id;
     await enrolRecord.save();
 
-    // Send verification email (don't auto-login)
+    // Send verification email — rollback if it fails
     const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    const verifyLink = `${clientUrl}/verify-email/${verificationToken}`;
+    const verifyLink = `${clientUrl}/verify-email/${verificationRaw}`;
 
-    await sendVerificationEmail({
-      to: user.email,
-      fullName: user.fullName,
-      verifyLink,
-    });
+    try {
+      await sendVerificationEmail({ to: user.email, fullName: user.fullName, verifyLink });
+    } catch {
+      await User.findByIdAndDelete(user._id);
+      enrolRecord.isUsed = false;
+      enrolRecord.usedBy = null;
+      await enrolRecord.save();
+      return res.status(500).json({
+        message: "Registration failed: could not send the verification email. Please try again.",
+      });
+    }
 
     return res.status(201).json({
       message: "Account created! Please check your email to verify your account.",
@@ -203,8 +216,9 @@ export const login = async (req, res) => {
 export const verifySetupToken = async (req, res) => {
   try {
     const { token } = req.params;
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
     const user = await User.findOne({
-      passwordSetupToken: token,
+      passwordSetupToken: hashedToken,
       passwordSetupExpiry: { $gt: new Date() },
       isPasswordSet: false,
     });
@@ -231,8 +245,9 @@ export const setPassword = async (req, res) => {
     const passwordError = validatePassword(password);
     if (passwordError) return res.status(400).json({ message: passwordError });
 
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
     const user = await User.findOne({
-      passwordSetupToken: token,
+      passwordSetupToken: hashedToken,
       passwordSetupExpiry: { $gt: new Date() },
       isPasswordSet: false,
     });
@@ -305,9 +320,10 @@ export const updateProfile = async (req, res) => {
 export const verifyEmail = async (req, res) => {
   try {
     const { token } = req.params;
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
 
     const user = await User.findOne({
-      verificationToken: token,
+      verificationToken: hashedToken,
       verificationTokenExpiry: { $gt: new Date() },
       isVerified: false,
     });
@@ -351,13 +367,14 @@ export const resendVerification = async (req, res) => {
       return res.status(400).json({ message: "This email is already verified. You can log in." });
     }
 
-    // Refresh token and expiry
-    user.verificationToken = generateSetupToken();
+    // Refresh token and expiry (store hash, send raw)
+    const { rawToken: verifyRaw, hashedToken: verifyHashed } = generateSetupToken();
+    user.verificationToken = verifyHashed;
     user.verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
 
     const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    const verifyLink = `${clientUrl}/verify-email/${user.verificationToken}`;
+    const verifyLink = `${clientUrl}/verify-email/${verifyRaw}`;
 
     await sendVerificationEmail({
       to: user.email,
@@ -423,7 +440,7 @@ export const createStaffAccount = async (req, res) => {
     }
 
     // ── Faculty account: email-based setup ───────────────────────────────────
-    const setupToken = generateSetupToken();
+    const { rawToken: setupRaw, hashedToken: setupHashed } = generateSetupToken();
     const setupExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 h
 
     const facultyUser = await User.create({
@@ -434,12 +451,12 @@ export const createStaffAccount = async (req, res) => {
       department: department?.trim() || "",
       isActive: true,
       isPasswordSet: false,
-      passwordSetupToken: setupToken,
+      passwordSetupToken: setupHashed,
       passwordSetupExpiry: setupExpiry,
     });
 
     const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    const setupLink = `${clientUrl}/set-password/${setupToken}`;
+    const setupLink = `${clientUrl}/set-password/${setupRaw}`;
 
     await sendPasswordSetupEmail({
       to: facultyUser.email,
@@ -467,13 +484,14 @@ export const resendSetupEmail = async (req, res) => {
     if (user.role !== "faculty") return res.status(400).json({ message: "Only faculty accounts require setup emails." });
     if (user.isPasswordSet) return res.status(400).json({ message: "This faculty member has already set their password." });
 
-    // Refresh the token and expiry
-    user.passwordSetupToken = generateSetupToken();
+    // Refresh the token and expiry (store hash, send raw)
+    const { rawToken: setupRaw, hashedToken: setupHashed } = generateSetupToken();
+    user.passwordSetupToken = setupHashed;
     user.passwordSetupExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
     await user.save();
 
     const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
-    const setupLink = `${clientUrl}/set-password/${user.passwordSetupToken}`;
+    const setupLink = `${clientUrl}/set-password/${setupRaw}`;
 
     await sendPasswordSetupEmail({ to: user.email, fullName: user.fullName, setupLink });
 
@@ -534,5 +552,115 @@ export const reactivateUser = async (req, res) => {
     return res.status(200).json({ message: `Account for ${user.fullName} has been reactivated.`, user: sanitizeUser(user) });
   } catch {
     return res.status(500).json({ message: "Failed to reactivate account." });
+  }
+};
+
+// ─── Public: Forgot password — send reset link ────────────────────────────────
+
+export const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email?.trim()) {
+      return res.status(400).json({ message: "Email is required." });
+    }
+    if (!emailPattern.test(email.trim())) {
+      return res.status(400).json({ message: "Please provide a valid email address." });
+    }
+
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
+
+    // Always respond the same way — prevents email enumeration
+    const genericMessage = "If this email is registered, a password reset link has been sent.";
+
+    if (!user || !user.isActive) {
+      return res.status(200).json({ message: genericMessage });
+    }
+
+    // Faculty who never completed setup have no password — no need to reset
+    if (!user.isPasswordSet) {
+      return res.status(200).json({ message: genericMessage });
+    }
+
+    // Generate reset token (store hash in DB, send raw in link)
+    const { rawToken: resetRaw, hashedToken: resetHashed } = generateSetupToken();
+    user.resetPasswordToken = resetHashed;
+    user.resetPasswordExpiry = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
+    await user.save();
+
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    const resetLink = `${clientUrl}/reset-password/${resetRaw}`;
+
+    await sendPasswordResetEmail({ to: user.email, fullName: user.fullName, resetLink });
+
+    return res.status(200).json({ message: genericMessage });
+  } catch {
+    return res.status(500).json({ message: "Failed to process request. Please try again." });
+  }
+};
+
+// ─── Public: Reset password — validate token and set new password ─────────────
+
+export const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password) return res.status(400).json({ message: "Password is required." });
+
+    const passwordError = validatePassword(password);
+    if (passwordError) return res.status(400).json({ message: passwordError });
+
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpiry: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return res.status(400).json({ message: "This link is invalid or has expired. Please request a new one." });
+    }
+
+    user.password = await bcrypt.hash(password, 12);
+    user.resetPasswordToken = null;
+    user.resetPasswordExpiry = null;
+    await user.save();
+
+    return res.status(200).json({ message: "Password reset successfully. You can now sign in with your new password." });
+  } catch {
+    return res.status(500).json({ message: "Failed to reset password. Please try again." });
+  }
+};
+
+// ─── Authenticated: Upload profile image ─────────────────────────────────────
+
+export const uploadProfileImage = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "No image file provided." });
+    }
+
+    const user = await User.findById(req.user._id);
+    if (!user) return res.status(404).json({ message: "User not found." });
+
+    // Delete old image from disk if it exists
+    if (user.profileImage) {
+      try {
+        const oldPath = path.resolve(user.profileImage.replace(/^\//, ""));
+        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
+      } catch {
+        // Non-fatal — continue even if old file can't be deleted
+      }
+    }
+
+    user.profileImage = `/uploads/avatars/${req.file.filename}`;
+    await user.save();
+
+    return res.status(200).json({
+      message: "Profile image updated.",
+      user: sanitizeUser(user),
+    });
+  } catch {
+    return res.status(500).json({ message: "Failed to upload image. Please try again." });
   }
 };

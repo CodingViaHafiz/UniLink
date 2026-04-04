@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import uniLinkLogo from "../../assets/unilink-logo-campus.svg";
+import UserAvatar from "../common/UserAvatar";
 import { useTheme } from "../../context/ThemeProvider";
 
 const ThemeToggle = () => {
@@ -29,33 +30,34 @@ const ThemeToggle = () => {
 };
 
 const NAV_LINKS = [
-  { label: "Home",      to: "/home",      hash: "home" },
-  { label: "Feed",      to: "/feed" },
-  { label: "Blogs",     to: "/blogs",     hash: "blogs" },
-  { label: "Resources", to: "/resources" },
-  { label: "Hostels",   to: "/hostels" },
-  { label: "About",     to: "/about" },
+  { label: "Home",           to: "/home" },
+  { label: "Feed",           to: "/feed" },
+  { label: "Class Messages", to: "/class-messages" },
+  { label: "Blogs",          to: "/blogs" },
+  { label: "Resources",      to: "/resources" },
+  { label: "Hostels",        to: "/hostels" },
+  { label: "About",          to: "/about" },
 ];
 
 const HomeNavbar = ({ user }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
+  // A link is active if pathname matches exactly (for /home) or starts with its path
+  const isActive = (to) =>
+    to === "/home" ? location.pathname === "/home" : location.pathname.startsWith(to);
+
   const getLinkTo = (item) => {
-    if (!item.hash) {
-      return item.to;
-    }
-
-    if (location.pathname === "/home") {
-      return `/home#${item.hash}`;
-    }
-
+    if (item.to === "/home" && location.pathname === "/home") return "/home#home";
+    if (item.to === "/blogs" && location.pathname === "/home") return "/home#blogs";
     return item.to;
   };
 
   return (
     <header className="sticky top-0 z-50 px-3 py-3 sm:px-6">
       <nav className="mx-auto w-full max-w-7xl">
+
+        {/* ── Desktop nav ─────────────────────────────────────────────────────── */}
         <div className="hidden items-center justify-between rounded-full border border-sky-100 bg-white/90 px-3 py-2 text-slate-800 shadow-[0_14px_34px_-18px_rgba(2,132,199,0.45)] backdrop-blur lg:flex">
           <Link className="inline-flex items-center gap-2 rounded-full pr-3" to="/home" aria-label="Go to home page">
             <img src={uniLinkLogo} alt="UniLink logo" className="h-10 w-10 rounded-full" />
@@ -64,19 +66,34 @@ const HomeNavbar = ({ user }) => {
             </span>
           </Link>
 
-          <div className="flex items-center gap-1">
-            {NAV_LINKS.map((item) => (
-              <Link
-                key={item.label}
-                className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-slate-600 transition-colors hover:bg-sky-50 hover:text-sky-700"
-                to={getLinkTo(item)}
-              >
-                {item.label}
-              </Link>
-            ))}
+          <div className="flex items-center gap-0.5">
+            {NAV_LINKS.map((item) => {
+              const active = isActive(item.to);
+              return (
+                <Link
+                  key={item.label}
+                  to={getLinkTo(item)}
+                  className={`relative rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-colors ${
+                    active
+                      ? "bg-sky-50 text-sky-700"
+                      : "text-slate-600 hover:bg-sky-50 hover:text-sky-700"
+                  }`}
+                >
+                  {item.label}
+                  {active && (
+                    <span className="absolute bottom-1 left-1/2 h-1 w-1 -translate-x-1/2 rounded-full bg-sky-500" />
+                  )}
+                </Link>
+              );
+            })}
+
             {user?.role === "faculty" && (
               <Link
-                className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-blue-600 transition-colors hover:bg-blue-50"
+                className={`rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-colors ${
+                  location.pathname.startsWith("/faculty-dashboard")
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-blue-600 hover:bg-blue-50"
+                }`}
                 to="/faculty-dashboard"
               >
                 Faculty
@@ -84,7 +101,11 @@ const HomeNavbar = ({ user }) => {
             )}
             {user?.role === "admin" && (
               <Link
-                className="rounded-full px-4 py-2 text-xs font-semibold tracking-wide text-emerald-600 transition-colors hover:bg-emerald-50"
+                className={`rounded-full px-4 py-2 text-xs font-semibold tracking-wide transition-colors ${
+                  location.pathname.startsWith("/admin-dashboard")
+                    ? "bg-emerald-50 text-emerald-700"
+                    : "text-emerald-600 hover:bg-emerald-50"
+                }`}
                 to="/admin-dashboard"
               >
                 Admin
@@ -96,15 +117,18 @@ const HomeNavbar = ({ user }) => {
             <ThemeToggle />
             <Link
               to="/profile"
-              className="btn-press flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-xs font-black text-sky-700 transition-colors hover:bg-sky-200"
+              className={`btn-press block rounded-full transition-all ${
+                location.pathname === "/profile" ? "ring-2 ring-sky-400 ring-offset-1" : ""
+              }`}
               title="Profile"
             >
-              {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
+              <UserAvatar user={user} className="h-9 w-9 rounded-full" textSize="text-xs" />
             </Link>
           </div>
         </div>
 
-          <div className="rounded-3xl border border-sky-100 bg-white/95 p-3 text-slate-800 shadow-[0_14px_34px_-18px_rgba(2,132,199,0.4)] backdrop-blur lg:hidden">
+        {/* ── Mobile nav ──────────────────────────────────────────────────────── */}
+        <div className="rounded-3xl border border-sky-100 bg-white/95 p-3 text-slate-800 shadow-[0_14px_34px_-18px_rgba(2,132,199,0.4)] backdrop-blur lg:hidden">
           <div className="flex items-center justify-between gap-2">
             <Link className="inline-flex min-w-0 items-center gap-2 rounded-full pr-2" to="/home">
               <img src={uniLinkLogo} alt="UniLink logo" className="h-10 w-10 rounded-full" />
@@ -116,52 +140,84 @@ const HomeNavbar = ({ user }) => {
               <ThemeToggle />
               <button
                 type="button"
-                className="shrink-0 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700"
-                onClick={() => setMenuOpen((previous) => !previous)}
+                className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+                  menuOpen
+                    ? "border-sky-200 bg-sky-50 text-sky-700"
+                    : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                }`}
+                onClick={() => setMenuOpen((prev) => !prev)}
+                aria-expanded={menuOpen}
+                aria-label="Toggle navigation menu"
               >
-                Menu
+                {menuOpen ? "Close" : "Menu"}
               </button>
             </div>
           </div>
 
           {menuOpen && (
-            <div className="mt-3 space-y-2 rounded-2xl border border-slate-200 bg-slate-50 p-2">
-              {NAV_LINKS.map((item) => (
-                <Link
-                  key={item.label}
-                  className="block rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
-                  to={getLinkTo(item)}
-                  onClick={() => setMenuOpen(false)}
-                >
-                  {item.label}
-                </Link>
-              ))}
+            <div className="mt-3 space-y-1 rounded-2xl border border-slate-200 bg-slate-50 p-2">
+              {NAV_LINKS.map((item) => {
+                const active = isActive(item.to);
+                return (
+                  <Link
+                    key={item.label}
+                    to={getLinkTo(item)}
+                    className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                      active
+                        ? "bg-sky-50 text-sky-700"
+                        : "text-slate-700 hover:bg-white"
+                    }`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    {item.label}
+                    {active && <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />}
+                  </Link>
+                );
+              })}
+
               {user?.role === "faculty" && (
                 <Link
-                  className="block rounded-xl px-3 py-2 text-sm font-semibold text-blue-700 transition-colors hover:bg-blue-50"
+                  className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                    location.pathname.startsWith("/faculty-dashboard")
+                      ? "bg-blue-50 text-blue-700"
+                      : "text-blue-700 hover:bg-blue-50"
+                  }`}
                   to="/faculty-dashboard"
                   onClick={() => setMenuOpen(false)}
                 >
                   Faculty Dashboard
+                  {location.pathname.startsWith("/faculty-dashboard") && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                  )}
                 </Link>
               )}
               {user?.role === "admin" && (
                 <Link
-                  className="block rounded-xl px-3 py-2 text-sm font-semibold text-emerald-700 transition-colors hover:bg-emerald-50"
+                  className={`flex items-center justify-between rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                    location.pathname.startsWith("/admin-dashboard")
+                      ? "bg-emerald-50 text-emerald-700"
+                      : "text-emerald-700 hover:bg-emerald-50"
+                  }`}
                   to="/admin-dashboard"
                   onClick={() => setMenuOpen(false)}
                 >
                   Admin Dashboard
+                  {location.pathname.startsWith("/admin-dashboard") && (
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                  )}
                 </Link>
               )}
+
               <Link
-                className="mt-1 flex items-center gap-2 rounded-xl bg-sky-50 px-3 py-2 text-sm font-semibold text-sky-700 transition-colors hover:bg-sky-100"
+                className={`mt-1 flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold transition-colors ${
+                  location.pathname === "/profile"
+                    ? "bg-sky-100 text-sky-700"
+                    : "bg-sky-50 text-sky-700 hover:bg-sky-100"
+                }`}
                 to="/profile"
                 onClick={() => setMenuOpen(false)}
               >
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-sky-100 text-[10px] font-black text-sky-700">
-                  {user?.fullName?.charAt(0)?.toUpperCase() || "U"}
-                </div>
+                <UserAvatar user={user} className="h-6 w-6 rounded-full" textSize="text-[10px]" />
                 Profile
               </Link>
             </div>
@@ -173,4 +229,3 @@ const HomeNavbar = ({ user }) => {
 };
 
 export default HomeNavbar;
-

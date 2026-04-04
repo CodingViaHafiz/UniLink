@@ -35,6 +35,7 @@ const statItems = [
     ),
     color: "text-sky-600",
     bg: "bg-sky-50",
+    border: "border-sky-100",
   },
   {
     key: "totalFaculty",
@@ -46,6 +47,7 @@ const statItems = [
     ),
     color: "text-blue-600",
     bg: "bg-blue-50",
+    border: "border-blue-100",
   },
   {
     key: "totalBlogs",
@@ -57,6 +59,7 @@ const statItems = [
     ),
     color: "text-violet-600",
     bg: "bg-violet-50",
+    border: "border-violet-100",
   },
   {
     key: "totalResources",
@@ -68,23 +71,40 @@ const statItems = [
     ),
     color: "text-emerald-600",
     bg: "bg-emerald-50",
+    border: "border-emerald-100",
   },
 ];
 
+// Skeleton that mirrors the real layout
+const StatsSkeleton = () => (
+  <MotionSection className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-7">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="h-10 w-10 animate-pulse rounded-xl bg-slate-100" />
+        <div className="space-y-2">
+          <div className="h-4 w-44 animate-pulse rounded-full bg-slate-100" />
+          <div className="h-3 w-28 animate-pulse rounded-full bg-slate-100" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="flex items-center gap-3 rounded-xl border border-slate-100 p-4">
+            <div className="h-10 w-10 shrink-0 animate-pulse rounded-xl bg-slate-100" />
+            <div className="space-y-2">
+              <div className="h-6 w-10 animate-pulse rounded bg-slate-100" />
+              <div className="h-3 w-16 animate-pulse rounded-full bg-slate-100" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  </MotionSection>
+);
+
 const StatsSection = ({ stats, isLoading }) => {
-  // Only show stats that have a value > 0
   const activeStats = statItems.filter((s) => stats[s.key] > 0);
 
-  if (isLoading) {
-    return (
-      <MotionSection className="mx-auto w-full max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-center py-8">
-          <div className="h-6 w-6 animate-spin rounded-full border-4 border-slate-200 border-t-slate-500" />
-        </div>
-      </MotionSection>
-    );
-  }
-
+  if (isLoading) return <StatsSkeleton />;
   if (activeStats.length === 0) return null;
 
   return (
@@ -104,11 +124,12 @@ const StatsSection = ({ stats, isLoading }) => {
             <p className="text-xs text-slate-500">Live numbers across UniLink</p>
           </div>
         </div>
+
         <div className="mt-5 grid grid-cols-2 gap-4 lg:grid-cols-4">
           {activeStats.map((item) => (
             <div
               key={item.key}
-              className="flex items-center gap-3 rounded-xl border border-slate-100 p-4"
+              className={`flex items-center gap-3 rounded-xl border p-4 transition-shadow hover:shadow-sm ${item.border}`}
             >
               <div className={`shrink-0 rounded-xl p-2.5 ${item.bg} ${item.color}`}>
                 {item.icon}

@@ -65,9 +65,9 @@ const HomePage = () => {
       <NoticeBanner />
       <HeroSection user={user} />
       <QuickTools />
-      <VisionMission />
       <BlogSection blogs={blogs} isLoading={blogsLoading} error={blogsError} />
       <StatsSection stats={stats} isLoading={statsLoading} />
+      <VisionMission />
       <HomeFooter />
     </MotionPage>
   );

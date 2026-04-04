@@ -61,6 +61,7 @@ const userSchema = new mongoose.Schema(
     verificationToken: {
       type: String,
       default: null,
+      index: true,
     },
     verificationTokenExpiry: {
       type: Date,
@@ -82,8 +83,25 @@ const userSchema = new mongoose.Schema(
     passwordSetupToken: {
       type: String,
       default: null,
+      index: true,
     },
     passwordSetupExpiry: {
+      type: Date,
+      default: null,
+    },
+    // Profile image
+    profileImage: {
+      type: String,
+      default: null,
+    },
+
+    // Password reset flow
+    resetPasswordToken: {
+      type: String,
+      default: null,
+      index: true,
+    },
+    resetPasswordExpiry: {
       type: Date,
       default: null,
     },
