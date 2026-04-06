@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { flushSync } from "react-dom";
 import { apiFetch } from "../lib/api";
 import { AuthContext } from "./authContext";
 
@@ -35,7 +36,9 @@ export const AuthProvider = ({ children }) => {
       method: "POST",
       body: JSON.stringify(payload),
     });
-    setUser(data.user);
+    // flushSync forces React to commit setUser synchronously before returning,
+    // so that navigate() in AuthPage sees isAuthenticated=true immediately.
+    flushSync(() => setUser(data.user));
     return data.user;
   };
 

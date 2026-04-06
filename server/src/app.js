@@ -14,8 +14,10 @@ import feedRoutes from "./routes/feedRoutes.js";
 import hostelRoutes from "./routes/hostelRoutes.js";
 import lostFoundRoutes from "./routes/lostFoundRoutes.js";
 import marketRoutes from "./routes/marketRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
 import programRoutes from "./routes/programRoutes.js";
 import resourceRoutes from "./routes/resourceRoutes.js";
+import supportRoutes from "./routes/supportRoutes.js";
 
 dotenv.config();
 
@@ -47,6 +49,8 @@ app.use("/api/marketplace", marketRoutes);
 app.use("/api/lost-found", lostFoundRoutes);
 app.use("/api/programs", programRoutes);
 app.use("/api/class-messages", classMessageRoutes);
+app.use("/api/support", supportRoutes);
+app.use("/api/notifications", notificationRoutes);
 
 app.use((err, _req, res, _next) => {
   if (err instanceof multer.MulterError) {

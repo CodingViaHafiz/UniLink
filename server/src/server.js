@@ -45,20 +45,38 @@ const startServer = async () => {
     // Make io accessible in controllers via req.app.get("io")
     app.set("io", io);
 
-    // Track online users + manage programme rooms
+    // Track online users + manage rooms
     io.on("connection", (socket) => {
       io.emit("online-count", io.engine.clientsCount);
 
-      // Client requests to receive messages for a specific programme
+      // ── Personal notification room (every authenticated user) ─────────────
+      socket.join(`user:${socket.user._id}`);
+
+      // ── Admin: auto-join support inbox room ───────────────────────────────
+      if (socket.user.role === "admin") {
+        socket.join("support:admin");
+      }
+
+      // ── Programme rooms (class messages) ─────────────────────────────────
       socket.on("join-programme-room", ({ programmeId }) => {
         if (!programmeId) return;
         socket.join(`programme:${programmeId}`);
       });
 
-      // Client leaves a programme room (e.g. navigating away or switching programme)
       socket.on("leave-programme-room", ({ programmeId }) => {
         if (!programmeId) return;
         socket.leave(`programme:${programmeId}`);
+      });
+
+      // ── Support chat rooms (per-conversation) ─────────────────────────────
+      socket.on("join-support-room", ({ conversationId }) => {
+        if (!conversationId) return;
+        socket.join(`support:${conversationId}`);
+      });
+
+      socket.on("leave-support-room", ({ conversationId }) => {
+        if (!conversationId) return;
+        socket.leave(`support:${conversationId}`);
       });
 
       socket.on("disconnect", () => {

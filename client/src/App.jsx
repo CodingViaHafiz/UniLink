@@ -30,6 +30,8 @@ import AdminMarketplacePage from "./pages/admin/AdminMarketplacePage";
 import AdminProgramsPage from "./pages/admin/AdminProgramsPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
 import ClassMessagesPage from "./pages/ClassMessagesPage";
+import SupportChatPage from "./pages/SupportChatPage";
+import AdminSupportPage from "./pages/admin/AdminSupportPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import SetPasswordPage from "./pages/SetPasswordPage";
@@ -95,6 +97,7 @@ function App() {
           <Route path="/lost-found" element={<LostFoundPage />} />
           <Route path="/programs" element={<ProgramsPage />} />
           <Route path="/class-messages" element={<ClassMessagesPage />} />
+          <Route path="/support" element={<SupportChatPage />} />
           <Route path="/profile" element={<ProfilePage />} />
 
           <Route element={<RoleRoute allowedRoles={["faculty"]} />}>
@@ -113,6 +116,7 @@ function App() {
               <Route path="marketplace" element={<AdminMarketplacePage />} />
               <Route path="lost-found" element={<AdminLostFoundPage />} />
               <Route path="programs" element={<AdminProgramsPage />} />
+              <Route path="support" element={<AdminSupportPage />} />
               <Route path="*" element={<Navigate to="/admin-dashboard" replace />} />
             </Route>
           </Route>

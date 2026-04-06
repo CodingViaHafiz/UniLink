@@ -39,10 +39,12 @@ const AuthPage = () => {
   const [lookupInfo, setLookupInfo] = useState(null); // { department, program, batch }
   const lookupDebounce = useRef(null);
 
-  if (isAuthenticated) {
-    const nextPath = location.state?.from?.pathname || "/home";
-    return <Navigate to={nextPath === "/login" ? "/home" : nextPath} replace />;
-  }
+  useEffect(() => {
+    if (isAuthenticated) {
+      const nextPath = location.state?.from?.pathname || "/home";
+      navigate(nextPath === "/login" ? "/home" : nextPath, { replace: true });
+    }
+  }, [isAuthenticated, navigate, location]);
 
   const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 
@@ -156,11 +158,10 @@ const AuthPage = () => {
             <button
               key={m}
               type="button"
-              className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${
-                mode === m
-                  ? "border-blue-200 bg-blue-50 text-blue-700"
-                  : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
-              }`}
+              className={`rounded-lg border px-3 py-2 text-sm font-semibold transition-colors ${mode === m
+                ? "border-blue-200 bg-blue-50 text-blue-700"
+                : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+                }`}
               onClick={() => switchMode(m)}
             >
               {m === "login" ? "Sign In" : "Register"}
@@ -230,13 +231,12 @@ const AuthPage = () => {
               <div className="relative">
                 <input
                   type="text"
-                  className={`w-full rounded-lg border px-3 py-2 pr-9 text-sm uppercase outline-none ring-blue-200 focus:ring-2 ${
-                    lookupState === LOOKUP_VALID
-                      ? "border-emerald-400 bg-emerald-50"
-                      : lookupState === LOOKUP_INVALID
+                  className={`w-full rounded-lg border px-3 py-2 pr-9 text-sm uppercase outline-none ring-blue-200 focus:ring-2 ${lookupState === LOOKUP_VALID
+                    ? "border-emerald-400 bg-emerald-50"
+                    : lookupState === LOOKUP_INVALID
                       ? "border-rose-400 bg-rose-50"
                       : "border-slate-300"
-                  }`}
+                    }`}
                   placeholder="e.g. FA21-BCS-001"
                   value={form.enrollmentNumber}
                   onChange={(e) => handleEnrollmentChange(e.target.value)}
@@ -325,9 +325,8 @@ const AuthPage = () => {
                   return (
                     <li
                       key={rule.label}
-                      className={`flex items-center gap-1.5 text-xs font-medium ${
-                        passed ? "text-emerald-600" : "text-slate-400"
-                      }`}
+                      className={`flex items-center gap-1.5 text-xs font-medium ${passed ? "text-emerald-600" : "text-slate-400"
+                        }`}
                     >
                       <span className={`inline-block h-1.5 w-1.5 rounded-full ${passed ? "bg-emerald-500" : "bg-slate-300"}`} />
                       {rule.label}
@@ -367,8 +366,8 @@ const AuthPage = () => {
             {isSubmitting
               ? "Please wait..."
               : mode === "register"
-              ? "Create Student Account"
-              : "Sign In"}
+                ? "Create Student Account"
+                : "Sign In"}
           </button>
         </form>
       </section>

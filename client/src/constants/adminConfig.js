@@ -25,6 +25,10 @@ export const adminSidebarSections = [
       { label: "Lost & Found", to: "/admin-dashboard/lost-found" },
     ],
   },
+  {
+    title: "Support",
+    links: [{ label: "Support Chat", to: "/admin-dashboard/support" }],
+  },
 ];
 
 export const quickActionLinks = [
