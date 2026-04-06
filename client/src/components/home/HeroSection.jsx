@@ -3,15 +3,16 @@ import UserAvatar from "../common/UserAvatar";
 import UpcomingCalendar from "./UpcomingCalendar";
 
 const roleBadge = {
-  student: { label: "Student",       cls: "bg-sky-100 text-sky-700" },
-  faculty: { label: "Faculty",       cls: "bg-blue-100 text-blue-700" },
-  admin:   { label: "Administrator", cls: "bg-emerald-100 text-emerald-700" },
+  student: { label: "Student", cls: "bg-sky-100 text-sky-700" },
+  faculty: { label: "Faculty", cls: "bg-blue-100 text-blue-700" },
+  admin: { label: "Administrator", cls: "bg-emerald-100 text-emerald-700" },
 };
 
 const HeroSection = ({ user }) => {
-  const badge     = roleBadge[user?.role] || roleBadge.student;
-  const firstName = user?.fullName?.split(" ")[0] || "there";
+  const badge = roleBadge[user?.role] || roleBadge.student;
+  const firstName = user?.fullName;
 
+  // .split(" ")[0] || "there";  for first name only
   // Sub-info shown in profile card depending on role
   const subInfo = (() => {
     if (user?.role === "student") {
@@ -19,7 +20,7 @@ const HeroSection = ({ user }) => {
       return parts.length ? parts.join(" · ") : user?.department || null;
     }
     if (user?.role === "faculty") return user?.department || null;
-    if (user?.role === "admin")   return user?.department || "Administration";
+    if (user?.role === "admin") return user?.department || "Administration";
     return null;
   })();
 
@@ -35,7 +36,7 @@ const HeroSection = ({ user }) => {
               {badge.label}
             </span>
 
-            <h1 className="mt-4 text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+            <h1 className="mt-4 text-2xl font-black tracking-tight sm:text-4xl lg:text-4xl">
               Welcome back,{" "}
               <span className="bg-gradient-to-r from-sky-300 to-blue-300 bg-clip-text text-transparent">
                 {firstName}

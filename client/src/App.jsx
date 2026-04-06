@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { ToastContainer } from "react-toastify";
 import { AuthProvider } from "./context/AuthProvider";
+import { AnimatePresence } from "./lib/motion";
 import AboutPage from "./pages/AboutPage";
 import AuthPage from "./pages/AuthPage";
 import BlogsPage from "./pages/BlogsPage";
@@ -65,9 +66,14 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   }, [location.pathname, location.hash]);
 
+  // Use first path segment as key so sub-routes (e.g. /admin-dashboard/*)
+  // don't re-trigger the page transition on every nested navigation.
+  const pageKey = location.pathname.split("/")[1] || "root";
+
   return (
     <AuthProvider>
-      <Routes>
+      <AnimatePresence mode="wait" initial={false}>
+      <Routes location={location} key={pageKey}>
         <Route path="/" element={<Navigate to="/home" replace />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -114,6 +120,7 @@ function App() {
 
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </AnimatePresence>
       <ToastContainer />
     </AuthProvider>
   );

@@ -180,7 +180,7 @@ const ProfilePage = () => {
                 >
                   <UserAvatar
                     user={user}
-                    className="h-28 w-28 rounded-xl border-2 border-white shadow-lg"
+                    className="h-33 w-30 rounded-xl border-2 border-white shadow-lg"
                     textSize="text-3xl"
                   />
                   <div className={`absolute inset-0 flex items-center justify-center rounded-xl bg-black/50 transition-opacity ${isUploadingImg ? "opacity-100" : "opacity-0 group-hover:opacity-100"}`}>

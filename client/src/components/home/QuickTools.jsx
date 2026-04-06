@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 const tools = [
   {
     label: "GPA Calculator",
-    description: "Calculate your CGPA instantly",
+    description: "Compute CGPA",
     to: "/gpa-calculator",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -19,7 +19,7 @@ const tools = [
   },
   {
     label: "Voice Your Say",
-    description: "Share thoughts anonymously",
+    description: "Share anonymously",
     to: "/feedback",
     icon: (
       <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -73,20 +73,6 @@ const tools = [
     glow: "hover:shadow-rose-500/25",
     decorBg: "bg-white/10",
   },
-  {
-    label: "Class Messages",
-    description: "Chat with your class",
-    to: "/class-messages",
-    icon: (
-      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
-      </svg>
-    ),
-    bg: "bg-gradient-to-br from-indigo-500 to-blue-600",
-    iconBg: "bg-white/20",
-    glow: "hover:shadow-indigo-500/25",
-    decorBg: "bg-white/10",
-  },
 ];
 
 const QuickTools = () => (
@@ -103,12 +89,12 @@ const QuickTools = () => (
       </div>
     </div>
 
-    {/* Grid: 2 cols mobile → 3 cols tablet → 6 cols desktop. 6 items = perfectly even at every breakpoint. */}
-    <MotionStagger className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-6">
-      {tools.map((tool) => (
+    <MotionStagger className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-5">
+      {tools.map((tool, i) => (
         <motion.div
           key={tool.label}
           variants={staggerChild}
+          className={i === tools.length - 1 && tools.length % 2 !== 0 ? "col-span-2 sm:col-span-1" : ""}
         >
           <Link
             to={tool.to}

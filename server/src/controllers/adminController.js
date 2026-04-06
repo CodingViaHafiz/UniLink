@@ -149,35 +149,74 @@ export const getRecentAdminActivity = async (_req, res) => {
 
 // ─── Semester management ──────────────────────────────────────────────────────
 
-// GET /api/admin/semester/preview?programmeCode=BCS&batch=FA21
-// Returns list of students that will be affected — let admin confirm before executing.
+// GET /api/admin/semester/preview?programmeCode=BCS&batch=FA21&action=increment
+// Returns each student with their computed afterSemester and status ("update" | "skip" | "at_max")
+// so the UI can show an accurate before/after breakdown before the admin commits.
 export const previewSemesterPromotion = async (req, res) => {
   try {
-    const { programmeCode, batch } = req.query;
+    const { programmeCode, batch, action, semester } = req.query;
     if (!programmeCode?.trim() || !batch?.trim()) {
-      return res.status(400).json({ message: "programmeCode and batch are required." });
+      return res
+        .status(400)
+        .json({ message: "programmeCode and batch are required." });
     }
+
+    // Fetch the programme so we know the ceiling (totalSemesters)
+    const programme = await Program.findOne({
+      code: { $regex: new RegExp(`^${programmeCode.trim()}$`, "i") },
+    })
+      .select("totalSemesters")
+      .lean();
+    const maxSemester = programme?.totalSemesters ?? 12;
 
     const students = await User.find({
       role: "student",
       program: { $regex: new RegExp(`^${programmeCode.trim()}$`, "i") },
-      batch:   { $regex: new RegExp(`^${batch.trim()}$`, "i") },
+      batch: { $regex: new RegExp(`^${batch.trim()}$`, "i") },
     })
       .select("fullName enrollmentNumber currentSemester")
       .sort({ fullName: 1 })
       .lean();
 
+    const targetSem = action === "set" ? Number(semester) || null : null;
+
     return res.status(200).json({
-      students: students.map((s) => ({
-        id:               s._id,
-        fullName:         s.fullName,
-        enrollmentNumber: s.enrollmentNumber,
-        currentSemester:  s.currentSemester ?? null,
-      })),
+      students: students.map((s) => {
+        const cur = s.currentSemester ?? null;
+        let afterSemester = null;
+        let status = "update";
+
+        if (action === "set") {
+          afterSemester = targetSem;
+          status = "update";
+        } else if (action === "increment") {
+          if (cur == null) {
+            status = "skip";
+          } else if (cur >= maxSemester) {
+            afterSemester = cur;
+            status = "at_max";
+          } else {
+            afterSemester = cur + 1;
+            status = "update";
+          }
+        }
+
+        return {
+          id: s._id,
+          fullName: s.fullName,
+          enrollmentNumber: s.enrollmentNumber,
+          currentSemester: cur,
+          afterSemester,
+          status,
+        };
+      }),
       count: students.length,
+      maxSemester,
     });
   } catch (error) {
-    return res.status(500).json({ message: "Preview failed.", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Preview failed.", error: error.message });
   }
 };
 
@@ -189,43 +228,60 @@ export const promoteSemester = async (req, res) => {
     const { programmeCode, batch, action, semester } = req.body;
 
     if (!programmeCode?.trim() || !batch?.trim()) {
-      return res.status(400).json({ message: "programmeCode and batch are required." });
+      return res
+        .status(400)
+        .json({ message: "programmeCode and batch are required." });
     }
     if (!["set", "increment"].includes(action)) {
-      return res.status(400).json({ message: "action must be 'set' or 'increment'." });
+      return res
+        .status(400)
+        .json({ message: "action must be 'set' or 'increment'." });
     }
     if (action === "set") {
       const sem = Number(semester);
       if (!Number.isInteger(sem) || sem < 1 || sem > 12) {
-        return res.status(400).json({ message: "semester must be an integer between 1 and 12." });
+        return res
+          .status(400)
+          .json({ message: "semester must be an integer between 1 and 12." });
       }
     }
 
     const baseFilter = {
-      role:    "student",
+      role: "student",
       program: { $regex: new RegExp(`^${programmeCode.trim()}$`, "i") },
-      batch:   { $regex: new RegExp(`^${batch.trim()}$`, "i") },
+      batch: { $regex: new RegExp(`^${batch.trim()}$`, "i") },
     };
 
     let result;
 
     if (action === "set") {
-      result = await User.updateMany(baseFilter, { $set: { currentSemester: Number(semester) } });
+      result = await User.updateMany(baseFilter, {
+        $set: { currentSemester: Number(semester) },
+      });
     } else {
-      // Only promote students who already have a semester value; skip uninitialized (null) ones
-      const filter = { ...baseFilter, currentSemester: { $ne: null, $gte: 1 } };
-      // Aggregation pipeline update handles the increment safely
+      // Look up the programme's ceiling so we never promote past totalSemesters
+      const programme = await Program.findOne({
+        code: { $regex: new RegExp(`^${programmeCode.trim()}$`, "i") },
+      })
+        .select("totalSemesters")
+        .lean();
+      const maxSem = programme?.totalSemesters ?? 12;
+
+      // Only update students who have a semester assigned and are not yet at the programme ceiling
+      const filter = { ...baseFilter, currentSemester: { $ne: null, $gte: 1, $lt: maxSem } };
       result = await User.updateMany(filter, [
         { $set: { currentSemester: { $add: ["$currentSemester", 1] } } },
       ]);
     }
 
     return res.status(200).json({
-      message: `${result.modifiedCount} student(s) updated successfully.`,
+      message: `${result.modifiedCount} student(s) promoted successfully.`,
       modifiedCount: result.modifiedCount,
     });
   } catch (error) {
-    return res.status(500).json({ message: "Promotion failed.", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Promotion failed.", error: error.message });
   }
 };
 
@@ -239,14 +295,16 @@ export const getProgrammeList = async (_req, res) => {
 
     return res.status(200).json({
       programmes: programmes.map((p) => ({
-        id:             p._id,
-        name:           p.name,
-        code:           p.code,
+        id: p._id,
+        name: p.name,
+        code: p.code,
         totalSemesters: p.totalSemesters,
       })),
     });
   } catch (error) {
-    return res.status(500).json({ message: "Failed to fetch programmes.", error: error.message });
+    return res
+      .status(500)
+      .json({ message: "Failed to fetch programmes.", error: error.message });
   }
 };
 

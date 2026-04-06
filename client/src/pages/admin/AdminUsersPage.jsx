@@ -100,9 +100,10 @@ const AdminUsersPage = () => {
     if (activeTab === TABS.ENROLLMENT) loadEnrolRecords();
   }, [activeTab, enrolFilter]);
 
-  // ── Load programmes (for semester tab) ───────────────────────────────────────
+  // ── Load programmes (for semester & enrollment tabs) ─────────────────────────
   useEffect(() => {
-    if (activeTab !== TABS.SEMESTER || programmes.length > 0) return;
+    if (programmes.length > 0) return;
+    if (activeTab !== TABS.SEMESTER && activeTab !== TABS.ENROLLMENT) return;
     apiFetch("/admin/programmes", { method: "GET" })
       .then((data) => setProgrammes(data.programmes || []))
       .catch((err) => notifyError(err.message));
@@ -166,10 +167,13 @@ const AdminUsersPage = () => {
     setPromoteResult(null);
     setIsPreviewing(true);
     try {
-      const data = await apiFetch(
-        `/admin/semester/preview?programmeCode=${encodeURIComponent(semForm.programmeCode)}&batch=${encodeURIComponent(semForm.batch)}`,
-        { method: "GET" }
-      );
+      const params = new URLSearchParams({
+        programmeCode: semForm.programmeCode,
+        batch: semForm.batch,
+        action: semForm.action,
+      });
+      if (semForm.action === "set") params.set("semester", semForm.semester);
+      const data = await apiFetch(`/admin/semester/preview?${params}`, { method: "GET" });
       setPreviewStudents(data.students || []);
     } catch (err) {
       notifyError(err.message);
@@ -180,7 +184,6 @@ const AdminUsersPage = () => {
 
   // ── Semester: execute promotion ───────────────────────────────────────────────
   const handleSemesterPromote = async () => {
-    if (!window.confirm(`This will update ${previewStudents.length} student(s). Proceed?`)) return;
     setIsPromoting(true);
     try {
       const body = { programmeCode: semForm.programmeCode, batch: semForm.batch, action: semForm.action };
@@ -241,6 +244,16 @@ const AdminUsersPage = () => {
 
   // Reset enrollment page when filter changes
   useEffect(() => { setEnrolPage(1); }, [enrolFilter]);
+
+  // ── Semester preview breakdown counts ────────────────────────────────────────
+  const semPreviewCounts = useMemo(() => {
+    if (!previewStudents) return { update: 0, skip: 0, atMax: 0 };
+    return {
+      update: previewStudents.filter((s) => s.status === "update").length,
+      skip:   previewStudents.filter((s) => s.status === "skip").length,
+      atMax:  previewStudents.filter((s) => s.status === "at_max").length,
+    };
+  }, [previewStudents]);
 
   return (
     <MotionPage className="space-y-6">
@@ -494,7 +507,6 @@ const AdminUsersPage = () => {
               {[
                 { key: "enrollmentNumber", label: "Enrollment Number", placeholder: "FA21-BCS-001" },
                 { key: "department", label: "Department", placeholder: "Computer Science" },
-                { key: "program", label: "Program", placeholder: "BCS" },
                 { key: "batch", label: "Batch", placeholder: "FA21" },
               ].map(({ key, label, placeholder }) => (
                 <label key={key} className="block">
@@ -509,6 +521,20 @@ const AdminUsersPage = () => {
                   />
                 </label>
               ))}
+              <label className="block">
+                <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">Program</span>
+                <select
+                  required
+                  className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm font-medium outline-none ring-blue-200 focus:ring-2"
+                  value={enrolForm.program}
+                  onChange={(e) => setEnrolForm((p) => ({ ...p, program: e.target.value }))}
+                >
+                  <option value="">Select programme…</option>
+                  {programmes.map((p) => (
+                    <option key={p.id} value={p.code}>{p.code} — {p.name}</option>
+                  ))}
+                </select>
+              </label>
 
               <div className="flex items-end sm:col-span-2 lg:col-span-4">
                 <button
@@ -706,18 +732,29 @@ const AdminUsersPage = () => {
             <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h2 className="text-xl font-black text-slate-900">
-                    {previewStudents.length === 0 ? "No students found" : `${previewStudents.length} student(s) will be updated`}
-                  </h2>
-                  {previewStudents.length > 0 && (
-                    <p className="mt-0.5 text-sm text-slate-500">
-                      {semForm.action === "set"
-                        ? `All will be set to Semester ${semForm.semester}.`
-                        : "All with an assigned semester will be promoted by +1."}
-                    </p>
+                  {previewStudents.length === 0 ? (
+                    <h2 className="text-xl font-black text-slate-900">No students found for this batch</h2>
+                  ) : (
+                    <>
+                      <h2 className="text-xl font-black text-slate-900">
+                        {semPreviewCounts.update} student(s) will be updated
+                      </h2>
+                      <div className="mt-1.5 flex flex-wrap gap-2">
+                        {semPreviewCounts.skip > 0 && (
+                          <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-700">
+                            {semPreviewCounts.skip} skipped — no semester assigned
+                          </span>
+                        )}
+                        {semPreviewCounts.atMax > 0 && (
+                          <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-bold text-slate-500">
+                            {semPreviewCounts.atMax} already at final semester
+                          </span>
+                        )}
+                      </div>
+                    </>
                   )}
                 </div>
-                {previewStudents.length > 0 && (
+                {semPreviewCounts.update > 0 && (
                   <button
                     type="button"
                     onClick={handleSemesterPromote}
@@ -744,27 +781,22 @@ const AdminUsersPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {previewStudents.map((s) => {
-                        const after = semForm.action === "set"
-                          ? Number(semForm.semester)
-                          : s.currentSemester != null ? s.currentSemester + 1 : "—";
-                        return (
-                          <tr key={s.id} className="border-b border-slate-100 text-sm">
-                            <td className="px-3 py-2.5 font-semibold text-slate-900">{s.fullName}</td>
-                            <td className="px-3 py-2.5 font-mono text-slate-500">{s.enrollmentNumber || "—"}</td>
-                            <td className="px-3 py-2.5">
-                              {s.currentSemester != null
-                                ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">Semester {s.currentSemester}</span>
-                                : <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">Not set</span>}
-                            </td>
-                            <td className="px-3 py-2.5">
-                              {after !== "—"
-                                ? <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">Semester {after}</span>
-                                : <span className="text-xs text-slate-400">Skipped (no semester)</span>}
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      {previewStudents.map((s) => (
+                        <tr key={s.id} className="border-b border-slate-100 text-sm">
+                          <td className="px-3 py-2.5 font-semibold text-slate-900">{s.fullName}</td>
+                          <td className="px-3 py-2.5 font-mono text-slate-500">{s.enrollmentNumber || "—"}</td>
+                          <td className="px-3 py-2.5">
+                            {s.currentSemester != null
+                              ? <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-600">Semester {s.currentSemester}</span>
+                              : <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">Not set</span>}
+                          </td>
+                          <td className="px-3 py-2.5">
+                            {s.status === "update" && <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">Semester {s.afterSemester}</span>}
+                            {s.status === "at_max" && <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-bold text-slate-500">Already at final semester</span>}
+                            {s.status === "skip" && <span className="text-xs text-slate-400">Skipped — no semester assigned</span>}
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
