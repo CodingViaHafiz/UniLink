@@ -209,7 +209,7 @@ const AdminUsersPage = () => {
         body: JSON.stringify(enrolForm),
       });
       notifySuccess(data.message);
-      setEnrolRecords((prev) => [data.record, ...prev]);
+      setEnrolRecords((prev) => enrolFilter === "used" ? prev : [data.record, ...prev]);
       setEnrolForm(emptyEnrolForm);
     } catch (err) { notifyError(err.message); }
     finally { setIsAddingEnrol(false); }
@@ -250,8 +250,8 @@ const AdminUsersPage = () => {
     if (!previewStudents) return { update: 0, skip: 0, atMax: 0 };
     return {
       update: previewStudents.filter((s) => s.status === "update").length,
-      skip:   previewStudents.filter((s) => s.status === "skip").length,
-      atMax:  previewStudents.filter((s) => s.status === "at_max").length,
+      skip: previewStudents.filter((s) => s.status === "skip").length,
+      atMax: previewStudents.filter((s) => s.status === "at_max").length,
     };
   }, [previewStudents]);
 
@@ -427,7 +427,6 @@ const AdminUsersPage = () => {
                       {paginatedUsers.map((user) => (
                         <tr key={user.id} className="border-b border-slate-100 text-sm">
                           <td className="px-3 py-3">
-                            <span className="font-semibold text-slate-900">{user.image}</span>
                             <span className="font-semibold text-slate-900">{user.fullName}</span>
                             {user.role === "faculty" && !user.isPasswordSet && (
                               <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">
@@ -505,18 +504,18 @@ const AdminUsersPage = () => {
 
             <form className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4" onSubmit={handleAddEnrol}>
               {[
-                { key: "enrollmentNumber", label: "Enrollment Number", placeholder: "FA21-BCS-001" },
-                { key: "department", label: "Department", placeholder: "Computer Science" },
-                { key: "batch", label: "Batch", placeholder: "FA21" },
-              ].map(({ key, label, placeholder }) => (
+                { key: "enrollmentNumber", label: "Enrollment Number", placeholder: "FA21-BCS-001", upper: true },
+                { key: "department", label: "Department", placeholder: "Computer Science", upper: false },
+                { key: "batch", label: "Batch", placeholder: "FA21", upper: true },
+              ].map(({ key, label, placeholder, upper }) => (
                 <label key={key} className="block">
                   <span className="mb-1 block text-xs font-bold uppercase tracking-wide text-slate-500">{label}</span>
                   <input
                     type="text"
-                    className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm uppercase outline-none ring-blue-200 focus:ring-2"
+                    className={`w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none ring-blue-200 focus:ring-2${upper ? " uppercase" : ""}`}
                     placeholder={placeholder}
                     value={enrolForm[key]}
-                    onChange={(e) => setEnrolForm((p) => ({ ...p, [key]: e.target.value }))}
+                    onChange={(e) => setEnrolForm((p) => ({ ...p, [key]: upper ? e.target.value.toUpperCase() : e.target.value }))}
                     required
                   />
                 </label>
@@ -529,9 +528,11 @@ const AdminUsersPage = () => {
                   value={enrolForm.program}
                   onChange={(e) => setEnrolForm((p) => ({ ...p, program: e.target.value }))}
                 >
-                  <option value="">Select programme…</option>
+                  <option value="">
+                    {programmes.length === 0 ? "No programmes found — create one in Programs page first" : "Select programme…"}
+                  </option>
                   {programmes.map((p) => (
-                    <option key={p.id} value={p.code}>{p.code} — {p.name}</option>
+                    <option key={p._id ?? p.id} value={p.code}>{p.code} — {p.name}</option>
                   ))}
                 </select>
               </label>
@@ -644,9 +645,11 @@ const AdminUsersPage = () => {
                     value={semForm.programmeCode}
                     onChange={(e) => { setSemForm((p) => ({ ...p, programmeCode: e.target.value })); setPreviewStudents(null); setPromoteResult(null); }}
                   >
-                    <option value="">Select programme…</option>
+                    <option value="">
+                      {programmes.length === 0 ? "No programmes found — create one in Programs page first" : "Select programme…"}
+                    </option>
                     {programmes.map((p) => (
-                      <option key={p.id} value={p.code}>{p.code} — {p.name}</option>
+                      <option key={p._id ?? p.id} value={p.code}>{p.code} — {p.name}</option>
                     ))}
                   </select>
                 </label>
