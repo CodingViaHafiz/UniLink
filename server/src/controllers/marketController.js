@@ -1,17 +1,14 @@
 import MarketListing from "../models/MarketListing.js";
+import { uploadToImageKit } from "../utils/uploadToImageKit.js";
 
-const toResponse = (item, req) => ({
+const toResponse = (item) => ({
   id: item._id,
   title: item.title,
   description: item.description,
   price: item.price,
   category: item.category,
   contact: item.contact,
-  imageUrl: item.imageUrl
-    ? item.imageUrl.startsWith("http")
-      ? item.imageUrl
-      : `${req.protocol}://${req.get("host")}${item.imageUrl}`
-    : "",
+  imageUrl: item.imageUrl || "",
   status: item.status,
   authorName: item.authorName,
   createdBy: item.createdBy,
@@ -40,7 +37,7 @@ export const createListing = async (req, res) => {
       price,
       category: category || "other",
       contact,
-      imageUrl: req.file ? `/uploads/marketplace/${req.file.filename}` : "",
+      imageUrl: req.file ? (await uploadToImageKit(req.file.buffer, req.file.originalname, "marketplace")).url : "",
       status: "pending",
       createdBy: req.user._id,
       authorName: req.user.fullName,
@@ -49,7 +46,7 @@ export const createListing = async (req, res) => {
     return res.status(201).json({
       message:
         "Listing created successfully. It will be visible after admin approval.",
-      listing: toResponse(listing, req),
+      listing: toResponse(listing),
     });
   } catch (error) {
     const status = error.name === "ValidationError" ? 400 : 500;
@@ -66,7 +63,7 @@ export const getApprovedListings = async (req, res) => {
     });
     return res
       .status(200)
-      .json({ listings: listings.map((l) => toResponse(l, req)) });
+      .json({ listings: listings.map((l) => toResponse(l)) });
   } catch (error) {
     return res
       .status(500)
@@ -81,7 +78,7 @@ export const getMyListings = async (req, res) => {
     );
     return res
       .status(200)
-      .json({ listings: listings.map((l) => toResponse(l, req)) });
+      .json({ listings: listings.map((l) => toResponse(l)) });
   } catch (error) {
     return res.status(500).json({
       message: "Failed to fetch your listings.",
@@ -95,7 +92,7 @@ export const getAllListings = async (req, res) => {
     const listings = await MarketListing.find().sort({ createdAt: -1 });
     return res
       .status(200)
-      .json({ listings: listings.map((l) => toResponse(l, req)) });
+      .json({ listings: listings.map((l) => toResponse(l)) });
   } catch (error) {
     return res
       .status(500)
@@ -125,7 +122,7 @@ export const approveListing = async (req, res) => {
 
     return res.status(200).json({
       message: `Listing ${status} successfully.`,
-      listing: toResponse(listing, req),
+      listing: toResponse(listing),
     });
   } catch (error) {
     return res

@@ -1,8 +1,9 @@
 import Blog from "../models/Blog.js";
 import Resource from "../models/Resource.js";
 import User from "../models/User.js";
+import { uploadToImageKit } from "../utils/uploadToImageKit.js";
 
-const toBlogResponse = (blog, req) => ({
+const toBlogResponse = (blog) => ({
   id: blog._id,
   title: blog.title,
   content: blog.content,
@@ -10,11 +11,7 @@ const toBlogResponse = (blog, req) => ({
   authorId: blog.authorId,
   role: blog.role,
   category: blog.category || "general",
-  imageUrl: blog.imageUrl
-    ? blog.imageUrl.startsWith("http")
-      ? blog.imageUrl
-      : `${req.protocol}://${req.get("host")}${blog.imageUrl}`
-    : "",
+  imageUrl: blog.imageUrl || "",
   createdAt: blog.createdAt,
 });
 
@@ -47,12 +44,12 @@ export const createBlog = async (req, res) => {
       authorId: req.user._id,
       role: req.user.role,
       category: category || "general",
-      imageUrl: req.file ? `/uploads/blogs/${req.file.filename}` : "",
+      imageUrl: req.file ? (await uploadToImageKit(req.file.buffer, req.file.originalname, "blogs")).url : "",
     });
 
     return res.status(201).json({
       message: "Blog created successfully.",
-      blog: toBlogResponse(blog, req),
+      blog: toBlogResponse(blog),
     });
   } catch (error) {
     const status = error.name === "ValidationError" ? 400 : 500;
@@ -67,7 +64,7 @@ export const getPublishedBlogs = async (req, res) => {
     const blogs = await Blog.find({ role: { $in: ["faculty", "admin"] } })
       .sort({ createdAt: -1 })
       .limit(50);
-    return res.status(200).json({ blogs: blogs.map((b) => toBlogResponse(b, req)) });
+    return res.status(200).json({ blogs: blogs.map((b) => toBlogResponse(b)) });
   } catch (error) {
     return res
       .status(500)
@@ -82,7 +79,7 @@ export const getMyBlogs = async (req, res) => {
     })
       .sort({ createdAt: -1 })
       .limit(50);
-    return res.status(200).json({ blogs: blogs.map((b) => toBlogResponse(b, req)) });
+    return res.status(200).json({ blogs: blogs.map((b) => toBlogResponse(b)) });
   } catch (error) {
     return res
       .status(500)
@@ -134,7 +131,7 @@ export const updateBlog = async (req, res) => {
       .status(200)
       .json({
         message: "Blog updated successfully.",
-        blog: toBlogResponse(blog, req),
+        blog: toBlogResponse(blog),
       });
   } catch (error) {
     const status = error.name === "ValidationError" ? 400 : 500;

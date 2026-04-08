@@ -12,43 +12,50 @@ const REACTIONS = [
 /* ── Post Bubble ──────────────────────────────────────────────────────────── */
 
 const PostBubble = ({ post, userId, onReact, onVote, onDelete, onPin, isAdmin, isFaculty }) => {
+  const isMine = post.authorId === userId;
   const hasVoted = post.poll?.options.some((o) => o.voters.includes(userId));
   const totalVotes = post.poll?.options.reduce((sum, o) => sum + o.votes, 0) || 0;
 
   return (
-    <div className="group px-4 py-2.5 transition-colors hover:bg-slate-50/50">
-      <div className="flex gap-2.5">
-        {/* Avatar */}
-        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-black text-sky-700">
+    <div className={`group flex ${isMine ? "justify-end" : "justify-start"} px-4 py-1`}>
+      {/* Avatar — only for others, aligned to top of bubble */}
+      {!isMine && (
+        <div className="mr-2 mt-5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-100 text-xs font-black text-sky-700">
           {post.author?.charAt(0)?.toUpperCase()}
         </div>
+      )}
 
-        <div className="min-w-0 flex-1">
-          {/* Name + meta */}
-          <div className="flex items-center gap-1.5">
-            <span className="text-sm font-bold text-slate-900">{post.author}</span>
-            <span className={`rounded px-1 py-0.5 text-[8px] font-bold uppercase leading-none ${post.role === "admin" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"}`}>
-              {post.role}
-            </span>
-            <span className="text-[10px] text-slate-400">
-              {new Date(post.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-            </span>
-
-            {/* Actions — visible on hover */}
-            <div className="ml-auto flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-              {(isAdmin || isFaculty) && (
-                <button type="button" onClick={() => onPin(post.id)} className="rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:bg-amber-50 hover:text-amber-600" title={post.isPinned ? "Unpin" : "Pin"}>
-                  📌
-                </button>
-              )}
-              {(isAdmin || (isFaculty && post.role !== "admin") || post.authorId === userId) && (
-                <button type="button" onClick={() => onDelete(post.id)} className="rounded px-1.5 py-0.5 text-[10px] text-slate-400 hover:bg-rose-50 hover:text-rose-600">✕</button>
-              )}
-            </div>
+      <div className={`flex max-w-[75%] flex-col gap-0.5 ${isMine ? "items-end" : "items-start"}`}>
+        {/* Header row: name (others) + hover actions */}
+        <div className={`flex items-center gap-1.5 px-1 ${isMine ? "flex-row-reverse" : ""}`}>
+          {!isMine && (
+            <>
+              <span className="text-xs font-bold text-slate-700">{post.author}</span>
+              <span className={`rounded px-1 py-0.5 text-[8px] font-bold uppercase leading-none ${post.role === "admin" ? "bg-emerald-100 text-emerald-700" : "bg-blue-100 text-blue-700"}`}>
+                {post.role}
+              </span>
+            </>
+          )}
+          <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+            {(isAdmin || isFaculty) && (
+              <button type="button" onClick={() => onPin(post.id)} className="rounded px-1 py-0.5 text-[11px] text-slate-400 hover:bg-amber-50 hover:text-amber-600" title={post.isPinned ? "Unpin" : "Pin"}>
+                📌
+              </button>
+            )}
+            {(isAdmin || (isFaculty && post.role !== "admin") || post.authorId === userId) && (
+              <button type="button" onClick={() => onDelete(post.id)} className="rounded px-1 py-0.5 text-[10px] text-slate-400 hover:bg-rose-50 hover:text-rose-600">✕</button>
+            )}
           </div>
+        </div>
 
+        {/* Bubble */}
+        <div className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
+          isMine
+            ? "rounded-br-sm bg-sky-600 text-white"
+            : "rounded-bl-sm border border-slate-200 bg-white text-slate-800"
+        }`}>
           {/* Content */}
-          <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{post.content}</p>
+          <p className="whitespace-pre-wrap">{post.content}</p>
 
           {/* Image */}
           {post.imageUrl && (
@@ -57,8 +64,8 @@ const PostBubble = ({ post, userId, onReact, onVote, onDelete, onPin, isAdmin, i
 
           {/* Poll */}
           {post.poll && (
-            <div className="mt-2 max-w-sm space-y-1 rounded-xl border border-slate-100 bg-white p-2.5">
-              <p className="text-xs font-bold text-slate-700">{post.poll.question}</p>
+            <div className={`mt-2 max-w-sm space-y-1 rounded-xl border p-2.5 ${isMine ? "border-white/20 bg-white/10" : "border-slate-100 bg-slate-50"}`}>
+              <p className={`text-xs font-bold ${isMine ? "text-white" : "text-slate-700"}`}>{post.poll.question}</p>
               {post.poll.options.map((opt) => {
                 const pct = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
                 const voted = opt.voters.includes(userId);
@@ -67,35 +74,48 @@ const PostBubble = ({ post, userId, onReact, onVote, onDelete, onPin, isAdmin, i
                     key={opt.id}
                     type="button"
                     onClick={() => onVote(post.id, opt.id)}
-                    className={`relative flex w-full items-center justify-between overflow-hidden rounded-lg border px-2.5 py-1.5 text-left text-xs font-semibold transition-colors ${voted ? "border-sky-300 bg-sky-50 text-sky-700" : "border-slate-200 text-slate-600 hover:border-slate-300"}`}
+                    className={`relative flex w-full items-center justify-between overflow-hidden rounded-lg border px-2.5 py-1.5 text-left text-xs font-semibold transition-colors ${
+                      voted
+                        ? "border-sky-300 bg-sky-50 text-sky-700"
+                        : isMine
+                        ? "border-white/30 bg-white/10 text-white hover:bg-white/20"
+                        : "border-slate-200 text-slate-600 hover:border-slate-300"
+                    }`}
                   >
-                    {hasVoted && <div className="absolute inset-y-0 left-0 bg-sky-100 transition-all" style={{ width: `${pct}%` }} />}
+                    {hasVoted && (
+                      <div className={`absolute inset-y-0 left-0 transition-all ${isMine ? "bg-white/20" : "bg-sky-100"}`} style={{ width: `${pct}%` }} />
+                    )}
                     <span className="relative">{opt.text}</span>
-                    {hasVoted && <span className="relative text-[10px] text-slate-400">{pct}%</span>}
+                    {hasVoted && <span className={`relative text-[10px] ${isMine ? "text-white/70" : "text-slate-400"}`}>{pct}%</span>}
                   </button>
                 );
               })}
-              <p className="text-[10px] text-slate-400">{totalVotes} {totalVotes === 1 ? "vote" : "votes"}</p>
+              <p className={`text-[10px] ${isMine ? "text-white/60" : "text-slate-400"}`}>{totalVotes} {totalVotes === 1 ? "vote" : "votes"}</p>
             </div>
           )}
+        </div>
 
-          {/* Reactions */}
-          <div className="mt-1.5 flex items-center gap-1">
-            {REACTIONS.map((r) => {
-              const count = post.reactions[r.key]?.length || 0;
-              const reacted = post.reactions[r.key]?.includes(userId);
-              return (
-                <button
-                  key={r.key}
-                  type="button"
-                  onClick={() => onReact(post.id, r.key)}
-                  className={`btn-press inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors ${reacted ? "bg-sky-100 text-sky-700" : "text-slate-400 hover:bg-slate-100"}`}
-                >
-                  {r.emoji} {count > 0 && <span>{count}</span>}
-                </button>
-              );
-            })}
-          </div>
+        {/* Timestamp */}
+        <span className="px-1 text-[10px] text-slate-400">
+          {new Date(post.createdAt).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+        </span>
+
+        {/* Reactions */}
+        <div className="flex items-center gap-1 px-1">
+          {REACTIONS.map((r) => {
+            const count = post.reactions[r.key]?.length || 0;
+            const reacted = post.reactions[r.key]?.includes(userId);
+            return (
+              <button
+                key={r.key}
+                type="button"
+                onClick={() => onReact(post.id, r.key)}
+                className={`btn-press inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[11px] font-semibold transition-colors ${reacted ? "bg-sky-100 text-sky-700" : "text-slate-400 hover:bg-slate-100"}`}
+              >
+                {r.emoji} {count > 0 && <span>{count}</span>}
+              </button>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -336,21 +356,12 @@ const FeedPage = () => {
         {/* Scrollable messages area */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto">
           <div className="mx-auto max-w-2xl">
-            {/* Date divider */}
-            {!isLoading && posts.length > 0 && (
-              <div className="flex items-center justify-center py-3">
-                <span className="rounded-full bg-slate-100 px-3 py-0.5 text-[10px] font-semibold text-slate-400">
-                  {new Date(posts[0]?.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
-                </span>
-              </div>
-            )}
-
             {/* Loading */}
             {isLoading && (
               <div className="space-y-3 px-4 py-6">
                 {[...Array(5)].map((_, i) => (
                   <div key={i} className="flex animate-pulse gap-2.5">
-                    <div className="h-8 w-8 shrink-0 rounded-full bg-slate-200" />
+                    <div className="h-7 w-7 shrink-0 rounded-full bg-slate-200" />
                     <div className="flex-1 space-y-1.5">
                       <div className="h-3 w-28 rounded bg-slate-200" />
                       <div className="h-3 w-full rounded bg-slate-200" />
@@ -379,10 +390,23 @@ const FeedPage = () => {
               <div className="px-4 py-6 text-center text-sm text-rose-600">{error}</div>
             )}
 
-            {/* Messages — all posts including pinned */}
-            {!isLoading && !error && posts.map((post) => (
-              <PostBubble key={post.id} post={post} userId={userId} onReact={handleReact} onVote={handleVote} onDelete={handleDelete} onPin={handlePin} isAdmin={isAdmin} isFaculty={isFaculty} />
-            ))}
+            {/* Posts with date dividers */}
+            {!isLoading && !error && posts.map((post, idx) => {
+              const prev = posts[idx - 1];
+              const showDate = !prev || new Date(post.createdAt).toDateString() !== new Date(prev.createdAt).toDateString();
+              return (
+                <div key={post.id}>
+                  {showDate && (
+                    <div className="flex items-center justify-center py-3">
+                      <span className="rounded-full bg-slate-100 px-3 py-0.5 text-[10px] font-semibold text-slate-400">
+                        {new Date(post.createdAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+                      </span>
+                    </div>
+                  )}
+                  <PostBubble post={post} userId={userId} onReact={handleReact} onVote={handleVote} onDelete={handleDelete} onPin={handlePin} isAdmin={isAdmin} isFaculty={isFaculty} />
+                </div>
+              );
+            })}
           </div>
         </div>
 

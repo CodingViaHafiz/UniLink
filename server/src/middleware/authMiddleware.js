@@ -18,7 +18,8 @@ export const protect = async (req, res, next) => {
 
     if (!user.isActive) {
       return res.status(403).json({
-        message: "Your account has been deactivated. Please contact the administrator.",
+        message:
+          "Your account has been deactivated. Please contact the administrator.",
       });
     }
 

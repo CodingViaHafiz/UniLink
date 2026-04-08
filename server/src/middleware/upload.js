@@ -1,6 +1,4 @@
-import fs from "fs";
 import multer from "multer";
-import path from "path";
 
 // ─── Allowed MIME type sets ───────────────────────────────────────────────────
 
@@ -17,7 +15,7 @@ export const MIME_TYPES = {
     "text/plain",
   ]),
 
-  // Hostel images: common web-safe formats only
+  // Image-only uploads
   images: new Set(["image/jpeg", "image/png", "image/webp"]),
 
   // Academic resources: documents + images (timetables are often uploaded as images)
@@ -40,46 +38,27 @@ export const MIME_TYPES = {
 
 const SIZE_LIMITS = {
   documents: 15 * 1024 * 1024, // 15 MB
-  images: 5 * 1024 * 1024, //  5 MB
+  images:     5 * 1024 * 1024, //  5 MB
   resources: 15 * 1024 * 1024, // 15 MB
 };
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const ensureDir = (dirPath) => {
-  if (!fs.existsSync(dirPath)) {
-    fs.mkdirSync(dirPath, { recursive: true });
-  }
-};
-
-const buildStorage = (folder) =>
-  multer.diskStorage({
-    destination: (_req, _file, cb) => {
-      const destination = path.resolve("uploads", folder);
-      ensureDir(destination);
-      cb(null, destination);
-    },
-    filename: (_req, file, cb) => {
-      const safeName = file.originalname
-        .replace(/\s+/g, "-")
-        .replace(/[^a-zA-Z0-9_.-]/g, "");
-      cb(null, `${Date.now()}-${safeName}`);
-    },
-  });
 
 // ─── Factory ──────────────────────────────────────────────────────────────────
 
 /**
- * @param {string} folder       - subfolder inside /uploads (e.g. "resources")
- * @param {"documents"|"images"} mimeGroup - which MIME allowlist to enforce
+ * Returns a multer instance that stores the file in memory (buffer).
+ * The buffer is available as req.file.buffer in controllers, ready to be
+ * forwarded to ImageKit.
+ *
+ * @param {string} _folder   - Kept for API compatibility; not used for storage
+ * @param {"documents"|"images"|"resources"} mimeGroup
  */
-export const createUploader = (folder, mimeGroup) => {
+export const createUploader = (_folder, mimeGroup) => {
   const allowedTypes = MIME_TYPES[mimeGroup];
   const maxSize = SIZE_LIMITS[mimeGroup];
 
   if (!allowedTypes) {
     throw new Error(
-      `Unknown mimeGroup "${mimeGroup}". Use "documents" or "images".`,
+      `Unknown mimeGroup "${mimeGroup}". Use "documents", "images", or "resources".`,
     );
   }
 
@@ -98,7 +77,7 @@ export const createUploader = (folder, mimeGroup) => {
   };
 
   return multer({
-    storage: buildStorage(folder),
+    storage: multer.memoryStorage(),
     fileFilter,
     limits: { fileSize: maxSize },
   });

@@ -1,5 +1,6 @@
 import ClassMessage from "../models/ClassMessage.js";
 import Program from "../models/Program.js";
+import { uploadToImageKit } from "../utils/uploadToImageKit.js";
 
 const toResponse = (msg) => ({
   id:             msg._id.toString(),
@@ -97,7 +98,8 @@ export const sendMessage = async (req, res) => {
       msgData.semester = Number(semester);
     }
     if (req.file) {
-      msgData.attachmentUrl  = `/uploads/class-messages/${req.file.filename}`;
+      const { url } = await uploadToImageKit(req.file.buffer, req.file.originalname, "class-messages");
+      msgData.attachmentUrl  = url;
       msgData.attachmentName = req.file.originalname;
     }
     if (type === "assignment" && dueDate) {

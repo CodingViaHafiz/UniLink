@@ -1,13 +1,11 @@
+import "dotenv/config";
 import cookie from "cookie";
-import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
 import User from "./models/User.js";
 import { verifyToken } from "./utils/token.js";
-
-dotenv.config();
 
 const port = process.env.PORT || 5000;
 

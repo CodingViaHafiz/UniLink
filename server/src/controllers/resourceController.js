@@ -1,18 +1,13 @@
 import Resource from "../models/Resource.js";
+import { uploadToImageKit } from "../utils/uploadToImageKit.js";
 
 const allowedTypes = new Set(["notes", "past-papers", "timetable"]);
 
-const buildFileUrl = (req, fileUrl) => {
-  if (!fileUrl) return "";
-  if (fileUrl.startsWith("http")) return fileUrl;
-  return `${req.protocol}://${req.get("host")}${fileUrl}`;
-};
-
-const toResourceResponse = (resource, req) => ({
+const toResourceResponse = (resource) => ({
   id: resource._id,
   title: resource.title,
   description: resource.description,
-  fileUrl: buildFileUrl(req, resource.fileUrl),
+  fileUrl: resource.fileUrl || "",
   type: resource.type,
   uploadedBy: resource.uploadedByName,
   role: resource.role,
@@ -36,7 +31,7 @@ export const createResource = async (req, res) => {
       title,
       description: description || "",
       type,
-      fileUrl: `/uploads/resources/${file.filename}`,
+      fileUrl: (await uploadToImageKit(file.buffer, file.originalname, "resources")).url,
       uploadedBy: req.user._id,
       uploadedByName: req.user.fullName,
       role: req.user.role,
@@ -44,7 +39,7 @@ export const createResource = async (req, res) => {
 
     return res.status(201).json({
       message: "Resource uploaded successfully.",
-      resource: toResourceResponse(resource, req),
+      resource: toResourceResponse(resource),
     });
   } catch (error) {
     return res.status(500).json({ message: "Failed to upload resource.", error: error.message });
@@ -63,7 +58,7 @@ export const getResources = async (req, res) => {
     }
 
     const resources = await Resource.find(query).sort({ createdAt: -1 });
-    return res.status(200).json({ resources: resources.map((resource) => toResourceResponse(resource, req)) });
+    return res.status(200).json({ resources: resources.map((resource) => toResourceResponse(resource)) });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch resources.", error: error.message });
   }
@@ -77,7 +72,7 @@ export const getResourcesByType = async (req, res) => {
     }
 
     const resources = await Resource.find({ type }).sort({ createdAt: -1 });
-    return res.status(200).json({ resources: resources.map((resource) => toResourceResponse(resource, req)) });
+    return res.status(200).json({ resources: resources.map((resource) => toResourceResponse(resource)) });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch resources.", error: error.message });
   }
@@ -86,7 +81,7 @@ export const getResourcesByType = async (req, res) => {
 export const getMyResources = async (req, res) => {
   try {
     const resources = await Resource.find({ uploadedBy: req.user._id }).sort({ createdAt: -1 });
-    return res.status(200).json({ resources: resources.map((resource) => toResourceResponse(resource, req)) });
+    return res.status(200).json({ resources: resources.map((resource) => toResourceResponse(resource)) });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch your resources.", error: error.message });
   }
@@ -117,14 +112,14 @@ export const updateResource = async (req, res) => {
     if (description !== undefined) resource.description = description;
     if (type) resource.type = type;
     if (req.file) {
-      resource.fileUrl = `/uploads/resources/${req.file.filename}`;
+      resource.fileUrl = (await uploadToImageKit(req.file.buffer, req.file.originalname, "resources")).url;
     }
 
     await resource.save();
 
     return res.status(200).json({
       message: "Resource updated successfully.",
-      resource: toResourceResponse(resource, req),
+      resource: toResourceResponse(resource),
     });
   } catch (error) {
     return res.status(500).json({ message: "Failed to update resource.", error: error.message });

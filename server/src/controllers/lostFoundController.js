@@ -1,6 +1,7 @@
 import LostFoundItem from "../models/LostFoundItem.js";
+import { uploadToImageKit } from "../utils/uploadToImageKit.js";
 
-const toResponse = (item, req) => ({
+const toResponse = (item) => ({
   id: item._id,
   title: item.title,
   description: item.description,
@@ -8,11 +9,7 @@ const toResponse = (item, req) => ({
   location: item.location,
   date: item.date,
   contact: item.contact,
-  imageUrl: item.imageUrl
-    ? item.imageUrl.startsWith("http")
-      ? item.imageUrl
-      : `${req.protocol}://${req.get("host")}${item.imageUrl}`
-    : "",
+  imageUrl: item.imageUrl || "",
   status: item.status,
   authorName: item.authorName,
   createdBy: item.createdBy,
@@ -44,7 +41,7 @@ export const createItem = async (req, res) => {
       location: location || "",
       date: date || undefined,
       contact,
-      imageUrl: req.file ? `/uploads/lostfound/${req.file.filename}` : "",
+      imageUrl: req.file ? (await uploadToImageKit(req.file.buffer, req.file.originalname, "lostfound")).url : "",
       status: "pending",
       createdBy: req.user._id,
       authorName: req.user.fullName,
@@ -52,7 +49,7 @@ export const createItem = async (req, res) => {
 
     return res.status(201).json({
       message: "Item reported successfully. It will be visible after admin approval.",
-      item: toResponse(item, req),
+      item: toResponse(item),
     });
   } catch (error) {
     const status = error.name === "ValidationError" ? 400 : 500;
@@ -69,7 +66,7 @@ export const getApprovedItems = async (req, res) => {
     }).sort({ createdAt: -1 });
     return res
       .status(200)
-      .json({ items: items.map((i) => toResponse(i, req)) });
+      .json({ items: items.map((i) => toResponse(i)) });
   } catch (error) {
     return res
       .status(500)
@@ -83,7 +80,7 @@ export const getMyItems = async (req, res) => {
       .sort({ createdAt: -1 });
     return res
       .status(200)
-      .json({ items: items.map((i) => toResponse(i, req)) });
+      .json({ items: items.map((i) => toResponse(i)) });
   } catch (error) {
     return res
       .status(500)
@@ -96,7 +93,7 @@ export const getAllItems = async (req, res) => {
     const items = await LostFoundItem.find().sort({ createdAt: -1 });
     return res
       .status(200)
-      .json({ items: items.map((i) => toResponse(i, req)) });
+      .json({ items: items.map((i) => toResponse(i)) });
   } catch (error) {
     return res
       .status(500)
@@ -126,7 +123,7 @@ export const approveItem = async (req, res) => {
 
     return res.status(200).json({
       message: `Item ${status} successfully.`,
-      item: toResponse(item, req),
+      item: toResponse(item),
     });
   } catch (error) {
     return res
@@ -157,7 +154,7 @@ export const resolveItem = async (req, res) => {
 
     return res.status(200).json({
       message: "Item marked as resolved.",
-      item: toResponse(item, req),
+      item: toResponse(item),
     });
   } catch (error) {
     return res

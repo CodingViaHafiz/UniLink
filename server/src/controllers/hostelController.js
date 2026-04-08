@@ -1,12 +1,7 @@
 import Hostel from "../models/Hostel.js";
+import { uploadToImageKit } from "../utils/uploadToImageKit.js";
 
-const buildImageUrl = (req, imageUrl) => {
-  if (!imageUrl) return "";
-  if (imageUrl.startsWith("http")) return imageUrl;
-  return `${req.protocol}://${req.get("host")}${imageUrl}`;
-};
-
-const toHostelResponse = (hostel, req) => ({
+const toHostelResponse = (hostel) => ({
   id: hostel._id,
   name: hostel.name,
   location: hostel.location,
@@ -14,7 +9,7 @@ const toHostelResponse = (hostel, req) => ({
   contact: hostel.contact,
   description: hostel.description,
   mapUrl: hostel.mapUrl || "",
-  imageUrl: buildImageUrl(req, hostel.imageUrl),
+  imageUrl: hostel.imageUrl || "",
   uploadedBy: hostel.uploadedBy,
   createdAt: hostel.createdAt,
 });
@@ -41,13 +36,13 @@ export const createHostel = async (req, res) => {
       contact,
       description: description || "",
       mapUrl: mapUrl || "",
-      imageUrl: req.file ? `/uploads/hostels/${req.file.filename}` : "",
+      imageUrl: req.file ? (await uploadToImageKit(req.file.buffer, req.file.originalname, "hostels")).url : "",
       uploadedBy: req.user._id,
     });
 
     return res.status(201).json({
       message: "Hostel added successfully.",
-      hostel: toHostelResponse(hostel, req),
+      hostel: toHostelResponse(hostel),
     });
   } catch (error) {
     return res.status(500).json({ message: "Failed to add hostel.", error: error.message });
@@ -57,7 +52,7 @@ export const createHostel = async (req, res) => {
 export const getHostels = async (req, res) => {
   try {
     const hostels = await Hostel.find().sort({ createdAt: -1 });
-    return res.status(200).json({ hostels: hostels.map((hostel) => toHostelResponse(hostel, req)) });
+    return res.status(200).json({ hostels: hostels.map((hostel) => toHostelResponse(hostel)) });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch hostels.", error: error.message });
   }
@@ -83,13 +78,16 @@ export const updateHostel = async (req, res) => {
     if (contact) hostel.contact = contact;
     if (description !== undefined) hostel.description = description;
     if (mapUrl !== undefined) hostel.mapUrl = mapUrl;
-    if (req.file) hostel.imageUrl = `/uploads/hostels/${req.file.filename}`;
+    if (req.file) {
+      const { url } = await uploadToImageKit(req.file.buffer, req.file.originalname, "hostels");
+      hostel.imageUrl = url;
+    }
 
     await hostel.save();
 
     return res.status(200).json({
       message: "Hostel updated successfully.",
-      hostel: toHostelResponse(hostel, req),
+      hostel: toHostelResponse(hostel),
     });
   } catch (error) {
     return res.status(500).json({ message: "Failed to update hostel.", error: error.message });

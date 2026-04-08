@@ -1,9 +1,7 @@
 import cookieParser from "cookie-parser";
 import cors from "cors";
-import dotenv from "dotenv";
 import express from "express";
 import multer from "multer";
-import path from "path";
 import adminRoutes from "./routes/adminRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import blogRoutes from "./routes/blogRoutes.js";
@@ -19,8 +17,6 @@ import programRoutes from "./routes/programRoutes.js";
 import resourceRoutes from "./routes/resourceRoutes.js";
 import supportRoutes from "./routes/supportRoutes.js";
 
-dotenv.config();
-
 const app = express();
 
 app.use(
@@ -31,7 +27,6 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
-app.use("/uploads", express.static(path.resolve("uploads")));
 
 app.get("/api/health", (_req, res) => {
   res.status(200).json({ status: "ok", service: "unilink-api" });

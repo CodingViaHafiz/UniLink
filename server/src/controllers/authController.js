@@ -1,10 +1,9 @@
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
-import fs from "fs";
-import path from "path";
 import EnrollmentNumber from "../models/EnrollmentNumber.js";
 import User from "../models/User.js";
 import { sendPasswordResetEmail, sendPasswordSetupEmail, sendVerificationEmail } from "../services/emailService.js";
+import { deleteFromImageKit, uploadToImageKit } from "../utils/uploadToImageKit.js";
 import { clearAuthCookie, setAuthCookie, signToken } from "../utils/token.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -643,17 +642,17 @@ export const uploadProfileImage = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: "User not found." });
 
-    // Delete old image from disk if it exists
-    if (user.profileImage) {
-      try {
-        const oldPath = path.resolve(user.profileImage.replace(/^\//, ""));
-        if (fs.existsSync(oldPath)) fs.unlinkSync(oldPath);
-      } catch {
-        // Non-fatal — continue even if old file can't be deleted
-      }
-    }
+    // Delete old image from ImageKit if it exists
+    await deleteFromImageKit(user.profileImageFileId);
 
-    user.profileImage = `/uploads/avatars/${req.file.filename}`;
+    const { url, fileId } = await uploadToImageKit(
+      req.file.buffer,
+      req.file.originalname,
+      "avatars",
+    );
+
+    user.profileImage = url;
+    user.profileImageFileId = fileId;
     await user.save();
 
     return res.status(200).json({

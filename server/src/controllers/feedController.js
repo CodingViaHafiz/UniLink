@@ -1,4 +1,5 @@
 import Post from "../models/Post.js";
+import { uploadToImageKit } from "../utils/uploadToImageKit.js";
 
 /* ── Response helper ──────────────────────────────────────────────────────── */
 
@@ -95,7 +96,8 @@ export const createPost = async (req, res) => {
 
     // Optional image
     if (req.file) {
-      postData.imageUrl = `/uploads/feed/${req.file.filename}`;
+      const { url } = await uploadToImageKit(req.file.buffer, req.file.originalname, "feed");
+      postData.imageUrl = url;
     }
 
     // Optional poll
