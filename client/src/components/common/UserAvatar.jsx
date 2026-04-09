@@ -11,6 +11,13 @@ import { SERVER_URL } from "../../lib/api";
  *   textSize    — font-size class for the fallback initial (default "text-sm")
  */
 
+// profileImage may be a full URL (ImageKit) or a relative server path
+const resolveImageSrc = (profileImage) => {
+  if (!profileImage) return null;
+  if (profileImage.startsWith("http://") || profileImage.startsWith("https://")) return profileImage;
+  return `${SERVER_URL}${profileImage}`;
+};
+
 const ROLE_GRADIENT = {
   student: "from-sky-400 to-blue-600",
   faculty: "from-blue-500 to-violet-600",
@@ -24,7 +31,7 @@ const UserAvatar = ({ user, className = "h-9 w-9 rounded-full", textSize = "text
   if (user?.profileImage) {
     return (
       <img
-        src={`${SERVER_URL}${user.profileImage}`}
+        src={resolveImageSrc(user.profileImage)}
         alt={user?.fullName || "User"}
         className={`shrink-0 object-cover ${className}`}
       />

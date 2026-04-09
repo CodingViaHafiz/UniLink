@@ -1,7 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import { useAuth } from "../hooks/useAuth";
-import { API_BASE, apiFetch } from "../lib/api";
+import { API_BASE, SERVER_URL, apiFetch } from "../lib/api";
+
+const resolveImg = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${SERVER_URL}${url}`;
+};
 import socket from "../lib/socket";
 
 const REACTIONS = [
@@ -59,7 +65,7 @@ const PostBubble = ({ post, userId, onReact, onVote, onDelete, onPin, isAdmin, i
 
           {/* Image */}
           {post.imageUrl && (
-            <img src={`${API_BASE.replace("/api", "")}${post.imageUrl}`} alt="" className="mt-2 max-h-56 rounded-xl object-cover" />
+            <img src={resolveImg(post.imageUrl)} alt="" className="mt-2 max-h-56 rounded-xl object-cover" />
           )}
 
           {/* Poll */}

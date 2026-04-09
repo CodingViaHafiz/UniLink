@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Pagination from "../../components/ui/Pagination";
+import UserAvatar from "../../components/common/UserAvatar";
 import { apiFetch } from "../../lib/api";
 import { MotionPage } from "../../lib/motion";
 import { notifyError, notifySuccess } from "../../lib/toast";
@@ -427,12 +428,17 @@ const AdminUsersPage = () => {
                       {paginatedUsers.map((user) => (
                         <tr key={user.id} className="border-b border-slate-100 text-sm">
                           <td className="px-3 py-3">
-                            <span className="font-semibold text-slate-900">{user.fullName}</span>
-                            {user.role === "faculty" && !user.isPasswordSet && (
-                              <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">
-                                Pending Setup
-                              </span>
-                            )}
+                            <div className="flex items-center gap-2.5">
+                              <UserAvatar user={user} className="h-8 w-8 rounded-full shrink-0" textSize="text-xs" />
+                              <div>
+                                <span className="font-semibold text-slate-900">{user.fullName}</span>
+                                {user.role === "faculty" && !user.isPasswordSet && (
+                                  <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-700">
+                                    Pending Setup
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </td>
                           <td className="px-3 py-3 text-slate-600">{user.email}</td>
                           <td className="px-3 py-3">

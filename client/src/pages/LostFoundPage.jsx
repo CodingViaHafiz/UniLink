@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AppLayout from "../components/layout/AppLayout";
 import Pagination from "../components/ui/Pagination";
 import { useAuth } from "../hooks/useAuth";
-import { API_BASE, apiFetch } from "../lib/api";
+import { API_BASE, SERVER_URL, apiFetch } from "../lib/api";
 
 const ITEMS_PER_PAGE = 9;
 
@@ -35,8 +35,11 @@ const myPostBadge = (status) => {
 
 /* ── Image URL helper ─────────────────────────────────────────────────────── */
 
-const imgUrl = (path) =>
-  path ? `${API_BASE.replace("/api", "")}${path}` : null;
+const imgUrl = (path) => {
+  if (!path) return null;
+  if (path.startsWith("http://") || path.startsWith("https://")) return path;
+  return `${SERVER_URL}${path}`;
+};
 
 /* ── Item Card (public grid) ──────────────────────────────────────────────── */
 
