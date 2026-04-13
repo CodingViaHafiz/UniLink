@@ -5,6 +5,7 @@ import User from "../models/User.js";
 import { sendPasswordResetEmail, sendPasswordSetupEmail, sendVerificationEmail } from "../services/emailService.js";
 import { deleteFromImageKit, uploadToImageKit } from "../utils/uploadToImageKit.js";
 import { clearAuthCookie, setAuthCookie, signToken } from "../utils/token.js";
+import pushNotification from "../utils/pushNotification.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -337,6 +338,19 @@ export const verifyEmail = async (req, res) => {
     user.verificationToken = null;
     user.verificationTokenExpiry = null;
     await user.save();
+
+    // Notify all admins that a new student has joined
+    const io = req.app.get("io");
+    if (io) {
+      const admins = await User.find({ role: "admin" }).select("_id").lean();
+      admins.forEach(({ _id }) =>
+        pushNotification(io, _id, "user_registered",
+          "New Student Registered",
+          `${user.fullName} (${user.enrollmentNumber}) has joined UniLink — ${user.program}, ${user.batch}.`,
+          { userId: user._id.toString() }
+        )
+      );
+    }
 
     return res.status(200).json({
       message: "Email verified successfully! You can now log in to UniLink.",

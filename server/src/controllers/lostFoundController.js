@@ -1,5 +1,7 @@
 import LostFoundItem from "../models/LostFoundItem.js";
+import User from "../models/User.js";
 import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import pushNotification from "../utils/pushNotification.js";
 
 const toResponse = (item) => ({
   id: item._id,
@@ -46,6 +48,19 @@ export const createItem = async (req, res) => {
       createdBy: req.user._id,
       authorName: req.user.fullName,
     });
+
+    // Notify all admins
+    const io = req.app.get("io");
+    if (io) {
+      const admins = await User.find({ role: "admin" }).select("_id").lean();
+      admins.forEach(({ _id }) =>
+        pushNotification(io, _id, "lostfound_new",
+          "New Lost & Found Report",
+          `${req.user.fullName} reported a ${item.type} item: "${item.title}".`,
+          { itemId: item._id.toString() }
+        )
+      );
+    }
 
     return res.status(201).json({
       message: "Item reported successfully. It will be visible after admin approval.",
@@ -120,6 +135,21 @@ export const approveItem = async (req, res) => {
 
     item.status = status;
     await item.save();
+
+    // Notify the item owner
+    const io = req.app.get("io");
+    if (io) {
+      const isApproved = status === "approved";
+      pushNotification(
+        io, item.createdBy,
+        isApproved ? "lostfound_approved" : "lostfound_rejected",
+        isApproved ? "Lost & Found Post Approved" : "Lost & Found Post Rejected",
+        isApproved
+          ? `Your report "${item.title}" is now visible on Lost & Found.`
+          : `Your report "${item.title}" was not approved.`,
+        { itemId: item._id.toString() }
+      );
+    }
 
     return res.status(200).json({
       message: `Item ${status} successfully.`,

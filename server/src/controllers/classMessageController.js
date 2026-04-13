@@ -1,6 +1,8 @@
 import ClassMessage from "../models/ClassMessage.js";
 import Program from "../models/Program.js";
+import User from "../models/User.js";
 import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import pushNotification from "../utils/pushNotification.js";
 
 const toResponse = (msg) => ({
   id:             msg._id.toString(),
@@ -113,16 +115,30 @@ export const sendMessage = async (req, res) => {
     if (io) {
       io.to(`programme:${programmeId}`).emit("class-message", response);
 
-      // ── Notification hook ───────────────────────────────────────────────────
-      // Uncomment when you build the notification system.
-      // io.to(`programme:${programmeId}`).emit("notification", {
-      //   type:          "class_message",
-      //   senderName:    req.user.fullName,
-      //   messageType:   type,
-      //   programmeCode: programme.code,
-      //   semester:      msgData.semester,   // null = all, N = specific
-      //   messageId:     message._id.toString(),
-      // });
+      // ── Notify students in this programme ───────────────────────────────────
+      const studentQuery = {
+        role:     "student",
+        program:  programme.name,
+        isActive: true,
+        _id:      { $ne: req.user._id },
+      };
+      // If message targets a specific semester, only notify students in that semester
+      if (msgData.semester) studentQuery.currentSemester = msgData.semester;
+
+      const typeLabel = type === "assignment" ? "New Assignment" : type === "notice" ? "New Notice" : "New Message";
+      const notifTitle = title.trim() ? `${typeLabel}: ${title.trim()}` : `${typeLabel} in ${programme.code}`;
+      const notifBody  = content.trim().slice(0, 120);
+
+      const students = await User.find(studentQuery).select("_id").lean();
+      students.forEach(({ _id }) => {
+        pushNotification(io, _id, "class_message", notifTitle, notifBody, {
+          programmeId:   programmeId.toString(),
+          programmeCode: programme.code,
+          messageId:     message._id.toString(),
+          messageType:   type,
+          semester:      msgData.semester ?? null,
+        });
+      });
     }
 
     return res.status(201).json({ message: "Message sent.", classMessage: response });

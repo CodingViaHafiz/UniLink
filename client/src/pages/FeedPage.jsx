@@ -55,11 +55,10 @@ const PostBubble = ({ post, userId, onReact, onVote, onDelete, onPin, isAdmin, i
         </div>
 
         {/* Bubble */}
-        <div className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${
-          isMine
-            ? "rounded-br-sm bg-sky-600 text-white"
-            : "rounded-bl-sm border border-slate-200 bg-white text-slate-800"
-        }`}>
+        <div className={`rounded-2xl px-3.5 py-2.5 text-sm leading-relaxed ${isMine
+          ? "rounded-br-sm bg-sky-600 text-white"
+          : "rounded-bl-sm border border-slate-200 bg-white text-slate-800"
+          }`}>
           {/* Content */}
           <p className="whitespace-pre-wrap">{post.content}</p>
 
@@ -80,19 +79,18 @@ const PostBubble = ({ post, userId, onReact, onVote, onDelete, onPin, isAdmin, i
                     key={opt.id}
                     type="button"
                     onClick={() => onVote(post.id, opt.id)}
-                    className={`relative flex w-full items-center justify-between overflow-hidden rounded-lg border px-2.5 py-1.5 text-left text-xs font-semibold transition-colors ${
-                      voted
-                        ? "border-sky-300 bg-sky-50 text-sky-700"
-                        : isMine
+                    className={`relative flex w-full items-center justify-between overflow-hidden rounded-lg border px-2.5 py-1.5 text-left text-xs font-semibold transition-colors ${voted
+                      ? "border-sky-300 bg-sky-50 text-sky-700"
+                      : isMine
                         ? "border-white/30 bg-white/10 text-white hover:bg-white/20"
                         : "border-slate-200 text-slate-600 hover:border-slate-300"
-                    }`}
+                      }`}
                   >
                     {hasVoted && (
-                      <div className={`absolute inset-y-0 left-0 transition-all ${isMine ? "bg-white/20" : "bg-sky-100"}`} style={{ width: `${pct}%` }} />
+                      <div className={`absolute inset-y-0 left-0 transition-all ${isMine ? "bg-sky-500" : "bg-sky-100"}`} style={{ width: `${pct}%` }} />
                     )}
-                    <span className="relative">{opt.text}</span>
-                    {hasVoted && <span className={`relative text-[10px] ${isMine ? "text-white/70" : "text-slate-400"}`}>{pct}%</span>}
+                    <span className="relative z-10">{opt.text}</span>
+                    {hasVoted && <span className={`relative z-10 text-[10px] font-bold ${isMine ? "text-white" : voted ? "text-blue-500" : "text-slate-700"}`}>{pct}%</span>}
                   </button>
                 );
               })}

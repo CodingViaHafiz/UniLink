@@ -1,4 +1,6 @@
 import Feedback from "../models/Feedback.js";
+import User from "../models/User.js";
+import pushNotification from "../utils/pushNotification.js";
 
 const toResponse = (item) => ({
   id: item._id,
@@ -22,6 +24,19 @@ export const submitFeedback = async (req, res) => {
       content,
       category: category || "general",
     });
+
+    // Notify all admins (feedback is anonymous — no user id stored)
+    const io = req.app.get("io");
+    if (io) {
+      const admins = await User.find({ role: "admin" }).select("_id").lean();
+      admins.forEach(({ _id }) =>
+        pushNotification(io, _id, "feedback_new",
+          "New Anonymous Feedback",
+          `Category: ${feedback.category} — "${feedback.content.slice(0, 80)}${feedback.content.length > 80 ? "…" : ""}"`,
+          { feedbackId: feedback._id.toString() }
+        )
+      );
+    }
 
     return res.status(201).json({
       message: "Feedback submitted successfully.",

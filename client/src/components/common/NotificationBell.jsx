@@ -15,11 +15,27 @@ import socket from "../../lib/socket";
 /* ── Notification type → label / color ───────────────────────────────────── */
 
 const TYPE_META = {
-  support_new:      { label: "New Request",     color: "bg-blue-100 text-blue-700" },
-  support_message:  { label: "Support",         color: "bg-blue-100 text-blue-700" },
-  support_reply:    { label: "Support Reply",   color: "bg-emerald-100 text-emerald-700" },
-  support_resolved: { label: "Resolved",        color: "bg-slate-100 text-slate-500" },
-  class_message:    { label: "Class",           color: "bg-indigo-100 text-indigo-700" },
+  // Support
+  support_new:          { label: "New Request",     color: "bg-blue-100 text-blue-700" },
+  support_message:      { label: "Support",         color: "bg-blue-100 text-blue-700" },
+  support_reply:        { label: "Support Reply",   color: "bg-emerald-100 text-emerald-700" },
+  support_resolved:     { label: "Resolved",        color: "bg-slate-100 text-slate-500" },
+  // Class messages
+  class_message:        { label: "Class",           color: "bg-indigo-100 text-indigo-700" },
+  // Marketplace
+  marketplace_new:      { label: "Marketplace",     color: "bg-violet-100 text-violet-700" },
+  marketplace_approved: { label: "Approved",        color: "bg-emerald-100 text-emerald-700" },
+  marketplace_rejected: { label: "Rejected",        color: "bg-rose-100 text-rose-700" },
+  // Lost & Found
+  lostfound_new:        { label: "Lost & Found",    color: "bg-amber-100 text-amber-700" },
+  lostfound_approved:   { label: "Approved",        color: "bg-emerald-100 text-emerald-700" },
+  lostfound_rejected:   { label: "Rejected",        color: "bg-rose-100 text-rose-700" },
+  // Feedback
+  feedback_new:         { label: "Feedback",        color: "bg-pink-100 text-pink-700" },
+  // Feed
+  feed_post:            { label: "New Post",         color: "bg-teal-100 text-teal-700" },
+  // Users
+  user_registered:      { label: "New User",         color: "bg-sky-100 text-sky-700" },
 };
 
 const getMeta = (type) => TYPE_META[type] || { label: "Notice", color: "bg-slate-100 text-slate-500" };
@@ -41,6 +57,7 @@ const NotificationBell = ({ userRole }) => {
   const [notifications, setNotifications]   = useState([]);
   const [isOpen, setIsOpen]                 = useState(false);
   const [isLoading, setIsLoading]           = useState(false);
+  const [isClearing, setIsClearing]         = useState(false);
   const dropdownRef = useRef(null);
   const navigate    = useNavigate();
 
@@ -97,16 +114,38 @@ const NotificationBell = ({ userRole }) => {
     }
   };
 
+  // ── Clear all notifications ──────────────────────────────────────────────
+  const handleClearAll = async () => {
+    setIsClearing(true);
+    try {
+      await apiFetch("/notifications", { method: "DELETE" });
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch {
+      // silent
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
   // ── Navigate on notification click ───────────────────────────────────────
   const handleNotifClick = (notif) => {
     setIsOpen(false);
     const { type, data } = notif;
     if (["support_new", "support_message", "support_reply", "support_resolved"].includes(type)) {
-      if (userRole === "admin") {
-        navigate("/admin-dashboard/support");
-      } else {
-        navigate("/support");
-      }
+      navigate(userRole === "admin" ? "/admin-dashboard/support" : "/support");
+    } else if (type === "class_message") {
+      navigate("/class-messages");
+    } else if (["marketplace_new", "marketplace_approved", "marketplace_rejected"].includes(type)) {
+      navigate(userRole === "admin" ? "/admin-dashboard/marketplace" : "/marketplace");
+    } else if (["lostfound_new", "lostfound_approved", "lostfound_rejected"].includes(type)) {
+      navigate(userRole === "admin" ? "/admin-dashboard/lost-found" : "/lost-found");
+    } else if (type === "feedback_new") {
+      navigate("/admin-dashboard/feedback");
+    } else if (type === "user_registered") {
+      navigate("/admin-dashboard/users");
+    } else if (type === "feed_post") {
+      navigate("/feed");
     }
   };
 
@@ -178,7 +217,19 @@ const NotificationBell = ({ userRole }) => {
           </div>
 
           {/* Footer */}
-          <div className="border-t border-slate-100 px-4 py-2 text-center">
+          <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2">
+            {notifications.length > 0 ? (
+              <button
+                type="button"
+                onClick={handleClearAll}
+                disabled={isClearing}
+                className="text-[11px] font-semibold text-rose-400 hover:text-rose-600 disabled:opacity-50"
+              >
+                {isClearing ? "Clearing…" : "Clear all"}
+              </button>
+            ) : (
+              <span />
+            )}
             <button
               type="button"
               onClick={() => setIsOpen(false)}

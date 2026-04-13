@@ -1,5 +1,7 @@
 import MarketListing from "../models/MarketListing.js";
+import User from "../models/User.js";
 import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import pushNotification from "../utils/pushNotification.js";
 
 const toResponse = (item) => ({
   id: item._id,
@@ -43,9 +45,21 @@ export const createListing = async (req, res) => {
       authorName: req.user.fullName,
     });
 
+    // Notify all admins
+    const io = req.app.get("io");
+    if (io) {
+      const admins = await User.find({ role: "admin" }).select("_id").lean();
+      admins.forEach(({ _id }) =>
+        pushNotification(io, _id, "marketplace_new",
+          "New Marketplace Listing",
+          `${req.user.fullName} listed "${listing.title}" — pending approval.`,
+          { listingId: listing._id.toString() }
+        )
+      );
+    }
+
     return res.status(201).json({
-      message:
-        "Listing created successfully. It will be visible after admin approval.",
+      message: "Listing created successfully. It will be visible after admin approval.",
       listing: toResponse(listing),
     });
   } catch (error) {
@@ -119,6 +133,21 @@ export const approveListing = async (req, res) => {
 
     listing.status = status;
     await listing.save();
+
+    // Notify the listing owner
+    const io = req.app.get("io");
+    if (io) {
+      const isApproved = status === "approved";
+      pushNotification(
+        io, listing.createdBy,
+        isApproved ? "marketplace_approved" : "marketplace_rejected",
+        isApproved ? "Listing Approved" : "Listing Rejected",
+        isApproved
+          ? `Your listing "${listing.title}" is now live on the Marketplace.`
+          : `Your listing "${listing.title}" was not approved.`,
+        { listingId: listing._id.toString() }
+      );
+    }
 
     return res.status(200).json({
       message: `Listing ${status} successfully.`,

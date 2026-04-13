@@ -51,6 +51,16 @@ export const markAllRead = async (req, res) => {
   }
 };
 
+// DELETE /api/notifications
+export const clearAll = async (req, res) => {
+  try {
+    await Notification.deleteMany({ recipientId: req.user._id });
+    return res.status(200).json({ ok: true });
+  } catch (error) {
+    return res.status(500).json({ message: "Failed to clear notifications.", error: error.message });
+  }
+};
+
 // PATCH /api/notifications/:id/read
 export const markOneRead = async (req, res) => {
   try {

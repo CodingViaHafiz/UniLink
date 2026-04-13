@@ -1,5 +1,7 @@
 import Post from "../models/Post.js";
+import User from "../models/User.js";
 import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import pushNotification from "../utils/pushNotification.js";
 
 /* ── Response helper ──────────────────────────────────────────────────────── */
 
@@ -119,7 +121,20 @@ export const createPost = async (req, res) => {
     const post = await Post.create(postData);
 
     const io = req.app.get("io");
-    if (io) io.emit("new-post", toPostResponse(post));
+    if (io) {
+      io.emit("new-post", toPostResponse(post));
+
+      // Notify all students about the new post
+      const preview = post.content.slice(0, 100) + (post.content.length > 100 ? "…" : "");
+      const students = await User.find({ role: "student", isActive: true }).select("_id").lean();
+      students.forEach(({ _id }) =>
+        pushNotification(io, _id, "feed_post",
+          `New post by ${req.user.fullName}`,
+          preview,
+          { postId: post._id.toString() }
+        )
+      );
+    }
 
     return res
       .status(201)

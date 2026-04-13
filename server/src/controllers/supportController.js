@@ -1,7 +1,7 @@
-import Notification from "../models/Notification.js";
 import SupportConversation from "../models/SupportConversation.js";
 import SupportMessage from "../models/SupportMessage.js";
 import User from "../models/User.js";
+import pushNotification from "../utils/pushNotification.js";
 
 /* ── Response helpers ────────────────────────────────────────────────────── */
 
@@ -28,29 +28,6 @@ const toMsgResponse = (msg) => ({
   content:        msg.content,
   createdAt:      msg.createdAt,
 });
-
-/* ── Notification helper ─────────────────────────────────────────────────── */
-// Creates a DB record + emits to the recipient's personal socket room.
-// Called internally — never throws to the caller.
-
-const pushNotification = async (io, recipientId, type, title, body, data = {}) => {
-  try {
-    const notif = await Notification.create({ recipientId, type, title, body, data });
-    if (io) {
-      io.to(`user:${recipientId}`).emit("notification", {
-        id:        notif._id.toString(),
-        type,
-        title,
-        body,
-        data,
-        read:      false,
-        createdAt: notif.createdAt,
-      });
-    }
-  } catch (err) {
-    console.error("[pushNotification] failed:", err.message);
-  }
-};
 
 /* ── GET /api/support/conversations ─────────────────────────────────────── */
 // student → their own conversations; admin → all conversations
