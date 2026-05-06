@@ -14,6 +14,7 @@ import LostFoundPage from "./pages/LostFoundPage";
 import MarketplacePage from "./pages/MarketplacePage";
 import HostelsPage from "./pages/HostelsPage";
 import HomePage from "./pages/HomePage";
+import LandingPage from "./pages/LandingPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProfilePage from "./pages/ProfilePage";
 import ProgramsPage from "./pages/ProgramsPage";
@@ -76,7 +77,7 @@ function App() {
     <AuthProvider>
       <AnimatePresence mode="wait" initial={false}>
       <Routes location={location} key={pageKey}>
-        <Route path="/" element={<Navigate to="/home" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/reset-password/:token" element={<ResetPasswordPage />} />

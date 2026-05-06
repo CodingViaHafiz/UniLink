@@ -1,5 +1,12 @@
 import express from "express";
-import { createListing, getApprovedListings, getMyListings, getAllListings, approveListing, deleteListing } from "../controllers/marketController.js";
+import {
+  createListing,
+  getApprovedListings,
+  getMyListings,
+  getAllListings,
+  approveListing,
+  deleteListing,
+} from "../controllers/marketController.js";
 import { authorizeRoles, protect } from "../middleware/authMiddleware.js";
 import { createUploader } from "../middleware/upload.js";
 

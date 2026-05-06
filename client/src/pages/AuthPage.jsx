@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { apiFetch } from "../lib/api";
 import { MotionPage } from "../lib/motion";
@@ -23,7 +23,8 @@ const LOOKUP_INVALID = "invalid";
 const AuthPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, login, register } = useAuth();
+  const [searchParams] = useSearchParams();
+  const { isAuthenticated, login } = useAuth();
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState(initialForm);
   const [showPasswordRules, setShowPasswordRules] = useState(false);
@@ -45,6 +46,12 @@ const AuthPage = () => {
       navigate(nextPath === "/login" ? "/home" : nextPath, { replace: true });
     }
   }, [isAuthenticated, navigate, location]);
+
+  useEffect(() => {
+    if (searchParams.get("mode") === "register") {
+      switchMode("register");
+    }
+  }, [searchParams]);
 
   const updateForm = (key, value) => setForm((prev) => ({ ...prev, [key]: value }));
 

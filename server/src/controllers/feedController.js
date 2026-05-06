@@ -59,12 +59,37 @@ export const getPinnedPosts = async (_req, res) => {
   }
 };
 
-/* ── Get all posts (newest first, pinned on top) ──────────────────────────── */
+/* ── Get posts — cursor-based pagination (newest first, pinned on top) ────── */
+// GET /api/feed?before=<postId>&limit=20
+// Returns posts in ascending order (oldest→newest) for chat display.
+// Pinned posts are always included regardless of cursor.
 
-export const getPosts = async (_req, res) => {
+export const getPosts = async (req, res) => {
   try {
-    const posts = await Post.find().sort({ createdAt: 1 }).limit(100);
-    return res.status(200).json({ posts: posts.map(toPostResponse) });
+    const { before, limit = 20 } = req.query;
+    const cap = Math.min(Number(limit), 50);
+
+    // ── Paginated non-pinned posts ─────────────────────────────────────────
+    const query = { isPinned: { $ne: true } };
+    if (before) query._id = { $lt: before };
+
+    const posts = await Post.find(query)
+      .sort({ createdAt: -1 })   // newest first from DB
+      .limit(cap)
+      .lean();
+
+    // ── Always fetch pinned posts (only on first load, i.e. no cursor) ─────
+    const pinned = before
+      ? []
+      : await Post.find({ isPinned: true }).sort({ createdAt: -1 }).lean();
+
+    // Reverse paginated posts so chat renders oldest→newest
+    const ordered = [...posts].reverse();
+
+    return res.status(200).json({
+      posts:   [...pinned.map(toPostResponse), ...ordered.map(toPostResponse)],
+      hasMore: posts.length === cap,
+    });
   } catch (error) {
     return res
       .status(500)
