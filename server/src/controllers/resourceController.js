@@ -1,5 +1,5 @@
 import Resource from "../models/Resource.js";
-import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import { uploadToS3 } from "../utils/uploadToS3.js";
 
 const allowedTypes = new Set(["notes", "past-papers", "timetable"]);
 
@@ -31,7 +31,7 @@ export const createResource = async (req, res) => {
       title,
       description: description || "",
       type,
-      fileUrl: (await uploadToImageKit(file.buffer, file.originalname, "resources")).url,
+      fileUrl: (await uploadToS3(file.buffer, file.originalname, "resources", file.mimetype)).url,
       uploadedBy: req.user._id,
       uploadedByName: req.user.fullName,
       role: req.user.role,

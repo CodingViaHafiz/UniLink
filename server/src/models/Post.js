@@ -14,6 +14,7 @@ const postSchema = new mongoose.Schema(
 
     // Optional image attachment
     imageUrl: { type: String, default: null },
+    s3Key: { type: String, default: null },
 
     // Optional poll — only set when post includes a poll
     poll: {

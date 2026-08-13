@@ -271,6 +271,8 @@ const AppLayout = ({
   topBarRight = null,
   sidebarExtra = null,
   children,
+  noScroll = false,
+  hideMobileHeader = false,
 }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { theme } = useTheme();
@@ -488,12 +490,12 @@ const AppLayout = ({
           <NotificationBell userRole={user?.role} />
         </header>
 
-        {/* ── Scrollable page content ───────────────────────────────────────── */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 sm:px-6">
+        {/* ── Page content container ───────────────────────────────────────── */}
+        <div className={`flex-1 ${noScroll ? "overflow-hidden flex flex-col px-3 py-3 sm:px-6 sm:py-4" : "overflow-y-auto px-4 py-6 sm:px-6"}`}>
 
           {/* Page header */}
           {(title || icon) && (
-            <div className="mb-6 space-y-3">
+            <div className={`mb-4 space-y-3 sm:mb-6 ${hideMobileHeader ? "hidden sm:block" : ""}`}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   {icon && (

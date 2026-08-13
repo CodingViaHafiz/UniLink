@@ -55,7 +55,7 @@ const startServer = async () => {
         socket.join("support:admin");
       }
 
-      // ── Programme rooms (class messages) ─────────────────────────────────
+      // ── Programme rooms (class messages)
       socket.on("join-programme-room", ({ programmeId }) => {
         if (!programmeId) return;
         socket.join(`programme:${programmeId}`);

@@ -1,6 +1,6 @@
 import Post from "../models/Post.js";
 import User from "../models/User.js";
-import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import { deleteFromS3, uploadToS3 } from "../utils/uploadToS3.js";
 import pushNotification from "../utils/pushNotification.js";
 
 /* ── Response helper ──────────────────────────────────────────────────────── */
@@ -123,8 +123,9 @@ export const createPost = async (req, res) => {
 
     // Optional image
     if (req.file) {
-      const { url } = await uploadToImageKit(req.file.buffer, req.file.originalname, "feed");
+      const { url, fileId } = await uploadToS3(req.file.buffer, req.file.originalname, "feed", req.file.mimetype);
       postData.imageUrl = url;
+      postData.s3Key = fileId;
     }
 
     // Optional poll
@@ -190,6 +191,9 @@ export const deletePost = async (req, res) => {
       return res
         .status(403)
         .json({ message: "Faculty cannot delete admin posts." });
+    }
+    if (post.s3Key) {
+      await deleteFromS3(post.s3Key);
     }
     await post.deleteOne();
 

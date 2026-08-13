@@ -3,7 +3,7 @@ import crypto from "crypto";
 import EnrollmentNumber from "../models/EnrollmentNumber.js";
 import User from "../models/User.js";
 import { sendPasswordResetEmail, sendPasswordSetupEmail, sendVerificationEmail } from "../services/emailService.js";
-import { deleteFromImageKit, uploadToImageKit } from "../utils/uploadToImageKit.js";
+import { deleteFromS3, uploadToS3 } from "../utils/uploadToS3.js";
 import { clearAuthCookie, setAuthCookie, signToken } from "../utils/token.js";
 import pushNotification from "../utils/pushNotification.js";
 
@@ -656,24 +656,26 @@ export const uploadProfileImage = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ message: "User not found." });
 
-    // Delete old image from ImageKit if it exists
-    await deleteFromImageKit(user.profileImageFileId);
+    // Delete old image from S3 if it exists
+    await deleteFromS3(user.s3Key);
 
-    const { url, fileId } = await uploadToImageKit(
+    const { url, fileId } = await uploadToS3(
       req.file.buffer,
       req.file.originalname,
       "avatars",
+      req.file.mimetype,
     );
 
     user.profileImage = url;
-    user.profileImageFileId = fileId;
+    user.s3Key = fileId;
     await user.save();
 
     return res.status(200).json({
       message: "Profile image updated.",
       user: sanitizeUser(user),
     });
-  } catch {
-    return res.status(500).json({ message: "Failed to upload image. Please try again." });
+  } catch (error) {
+    console.error("[uploadProfileImage Error]:", error);
+    return res.status(500).json({ message: error.message || "Failed to upload image. Please try again." });
   }
 };

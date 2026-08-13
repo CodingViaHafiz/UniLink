@@ -1,5 +1,5 @@
 import Hostel from "../models/Hostel.js";
-import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import { uploadToS3 } from "../utils/uploadToS3.js";
 
 const toHostelResponse = (hostel) => ({
   id: hostel._id,
@@ -36,7 +36,7 @@ export const createHostel = async (req, res) => {
       contact,
       description: description || "",
       mapUrl: mapUrl || "",
-      imageUrl: req.file ? (await uploadToImageKit(req.file.buffer, req.file.originalname, "hostels")).url : "",
+      imageUrl: req.file ? (await uploadToS3(req.file.buffer, req.file.originalname, "hostels", req.file.mimetype)).url : "",
       uploadedBy: req.user._id,
     });
 

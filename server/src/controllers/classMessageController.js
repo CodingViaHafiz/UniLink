@@ -1,7 +1,7 @@
 import ClassMessage from "../models/ClassMessage.js";
 import Program from "../models/Program.js";
 import User from "../models/User.js";
-import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import { uploadToS3 } from "../utils/uploadToS3.js";
 import pushNotification from "../utils/pushNotification.js";
 
 const toResponse = (msg) => ({
@@ -100,7 +100,7 @@ export const sendMessage = async (req, res) => {
       msgData.semester = Number(semester);
     }
     if (req.file) {
-      const { url } = await uploadToImageKit(req.file.buffer, req.file.originalname, "class-messages");
+      const { url } = await uploadToS3(req.file.buffer, req.file.originalname, "class-messages", req.file.mimetype);
       msgData.attachmentUrl  = url;
       msgData.attachmentName = req.file.originalname;
     }

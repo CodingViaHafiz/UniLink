@@ -1,6 +1,6 @@
 import LostFoundItem from "../models/LostFoundItem.js";
 import User from "../models/User.js";
-import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import { uploadToS3 } from "../utils/uploadToS3.js";
 import pushNotification from "../utils/pushNotification.js";
 
 const toResponse = (item) => ({
@@ -43,7 +43,7 @@ export const createItem = async (req, res) => {
       location: location || "",
       date: date || undefined,
       contact,
-      imageUrl: req.file ? (await uploadToImageKit(req.file.buffer, req.file.originalname, "lostfound")).url : "",
+      imageUrl: req.file ? (await uploadToS3(req.file.buffer, req.file.originalname, "lostfound", req.file.mimetype)).url : "",
       status: "pending",
       createdBy: req.user._id,
       authorName: req.user.fullName,

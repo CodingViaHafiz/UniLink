@@ -94,7 +94,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
-    profileImageFileId: {
+    s3Key: {
       type: String,
       default: null,
     },

@@ -1,6 +1,6 @@
 import MarketListing from "../models/MarketListing.js";
 import User from "../models/User.js";
-import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import { uploadToS3 } from "../utils/uploadToS3.js";
 import pushNotification from "../utils/pushNotification.js";
 
 const toResponse = (item) => ({
@@ -39,7 +39,7 @@ export const createListing = async (req, res) => {
       price,
       category: category || "other",
       contact,
-      imageUrl: req.file ? (await uploadToImageKit(req.file.buffer, req.file.originalname, "marketplace")).url : "",
+      imageUrl: req.file ? (await uploadToS3(req.file.buffer, req.file.originalname, "marketplace", req.file.mimetype)).url : "",
       status: "pending",
       createdBy: req.user._id,
       authorName: req.user.fullName,

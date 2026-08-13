@@ -1,7 +1,7 @@
 import Blog from "../models/Blog.js";
 import Resource from "../models/Resource.js";
 import User from "../models/User.js";
-import { uploadToImageKit } from "../utils/uploadToImageKit.js";
+import { uploadToS3 } from "../utils/uploadToS3.js";
 
 const toBlogResponse = (blog) => ({
   id: blog._id,
@@ -44,7 +44,7 @@ export const createBlog = async (req, res) => {
       authorId: req.user._id,
       role: req.user.role,
       category: category || "general",
-      imageUrl: req.file ? (await uploadToImageKit(req.file.buffer, req.file.originalname, "blogs")).url : "",
+      imageUrl: req.file ? (await uploadToS3(req.file.buffer, req.file.originalname, "blogs", req.file.mimetype)).url : "",
     });
 
     return res.status(201).json({

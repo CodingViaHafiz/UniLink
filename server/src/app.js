@@ -50,10 +50,13 @@ app.use("/api/notifications", notificationRoutes);
 app.use((err, _req, res, _next) => {
   if (err instanceof multer.MulterError) {
     if (err.code === "LIMIT_FILE_SIZE") {
-      return res.status(400).json({ message: "File is too large. Maximum allowed size exceeded." });
+      return res.status(400).json({
+        message: "File is too large. Maximum allowed storage limit exceeded (5 MB for images, 15 MB for documents).",
+      });
     }
-    // LIMIT_UNEXPECTED_FILE is reused for invalid mime type (see upload.js)
-    return res.status(400).json({ message: err.field || "Invalid file upload." });
+    return res.status(400).json({
+      message: err.customMessage || err.message || err.field || "Invalid file upload.",
+    });
   }
 
   console.error(err);

@@ -38,6 +38,10 @@ const blogSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    s3Key: {
+      type: String,
+      default: null,
+    },
   },
   { timestamps: true }
 );

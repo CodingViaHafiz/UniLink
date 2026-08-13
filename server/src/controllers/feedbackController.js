@@ -50,10 +50,28 @@ export const submitFeedback = async (req, res) => {
   }
 };
 
-export const getApprovedFeedback = async (_req, res) => {
+export const getApprovedFeedback = async (req, res) => {
   try {
-    const feedbacks = await Feedback.find({ status: "approved" }).sort({ createdAt: -1 }).limit(20);
-    return res.status(200).json({ feedbacks: feedbacks.map((f) => toResponse(f)) });
+    const { before, limit = 10, category } = req.query;
+    const query = { status: "approved" };
+
+    if (category && category !== "all") {
+      query.category = category;
+    }
+    if (before) {
+      query._id = { $lt: before };
+    }
+
+    const cap = Math.min(Number(limit) || 10, 50);
+    const feedbacks = await Feedback.find(query)
+      .sort({ createdAt: -1 })
+      .limit(cap)
+      .lean();
+
+    return res.status(200).json({
+      feedbacks: feedbacks.map((f) => toResponse(f)),
+      hasMore: feedbacks.length === cap,
+    });
   } catch (error) {
     return res.status(500).json({ message: "Failed to fetch feedback.", error: error.message });
   }

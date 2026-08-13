@@ -32,6 +32,10 @@ const marketListingSchema = new mongoose.Schema(
       type: String,
       default: "",
     },
+    s3Key: {
+      type: String,
+      default: null,
+    },
     status: {
       type: String,
       enum: ["pending", "approved", "rejected"],

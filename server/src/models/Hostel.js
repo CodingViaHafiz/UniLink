@@ -40,6 +40,10 @@ const hostelSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    s3Key: {
+      type: String,
+      default: null,
+    },
     uploadedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

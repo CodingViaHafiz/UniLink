@@ -22,6 +22,7 @@ const classMessageSchema = new mongoose.Schema(
 
     attachmentUrl:  { type: String, default: null },
     attachmentName: { type: String, default: null },
+    s3Key:          { type: String, default: null },
 
     // Assignments only
     dueDate: { type: Date, default: null },
